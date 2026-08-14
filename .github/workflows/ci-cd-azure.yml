@@ -1,4 +1,4 @@
-name: Azure AKS CI/CD Production Pipeline
+name: Azure AKS CI/CD Enterprise Production Pipeline
 
 on:
   push:
@@ -6,17 +6,68 @@ on:
     paths:
       - 'application/**'
       - 'chart/**'
+      - 'script_to_create_Az/**'
       - '.github/workflows/ci-cd-azure.yml'
   workflow_dispatch:
 
 jobs:
-  build-and-deploy-azure:
-    name: Build & Deploy to Azure AKS (ACR)
+  pipeline:
+    name: Enterprise DevSecOps CI/CD Pipeline (Azure AKS)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
+      ################################################################################
+      # Compile & Code Validation
+      ################################################################################
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Compile Backend & UI_Script Python Syntax
+        run: |
+          python -m py_compile ./application/backend/main.py
+          python -m py_compile ./application/UI_Script/server.py
+
+      - name: Compile & Validate Frontend React TypeScript Code
+        run: |
+          cd application/frontend
+          npm ci
+          npm run build
+
+      ################################################################################
+      # Gitleaks Secret Scanning
+      ################################################################################
+      - name: Run Gitleaks Secret Scanner
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      ################################################################################
+      # Trivy Filesystem Scan
+      ################################################################################
+      - name: Run Trivy Filesystem Vulnerability Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+
+      ################################################################################
+      # Azure Authentication & Docker Configuration
+      ################################################################################
       - name: Log in to Azure Container Registry (ACR)
         uses: azure/docker-login@v1
         with:
@@ -24,22 +75,64 @@ jobs:
           username: ${{ secrets.ACR_USERNAME }}
           password: ${{ secrets.ACR_PASSWORD }}
 
-      - name: Build & Push Backend Docker Image (Azure)
+      ################################################################################
+      # Backend Docker Build
+      ################################################################################
+      - name: Backend Docker Build & Push (Azure ACR)
         run: |
-          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/backend:${{ github.sha }} -f ./application/backend/Dockerfile .
-          docker push ${{ secrets.ACR_LOGIN_SERVER }}/backend:${{ github.sha }}
+          IMAGE_TAG="${{ secrets.ACR_LOGIN_SERVER }}/backend:${{ github.sha }}"
+          docker build -t $IMAGE_TAG -f ./application/backend/Dockerfile .
+          docker push $IMAGE_TAG
 
-      - name: Build & Push Frontend Docker Image (Azure)
+      ################################################################################
+      # Frontend Docker Build
+      ################################################################################
+      - name: Frontend Docker Build & Push (Azure ACR)
         run: |
-          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/frontend:${{ github.sha }} -f ./application/frontend/Dockerfile .
-          docker push ${{ secrets.ACR_LOGIN_SERVER }}/frontend:${{ github.sha }}
+          IMAGE_TAG="${{ secrets.ACR_LOGIN_SERVER }}/frontend:${{ github.sha }}"
+          docker build -t $IMAGE_TAG -f ./application/frontend/Dockerfile .
+          docker push $IMAGE_TAG
 
-      - name: Build & Push UI_Script Provisioner Docker Image (Azure)
+      ################################################################################
+      # UI_Script Provisioner Docker Build
+      ################################################################################
+      - name: UI_Script Provisioner Docker Build & Push (Azure ACR)
         run: |
-          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/ui_script:${{ github.sha }} -f ./application/UI_Script/Dockerfile .
-          docker push ${{ secrets.ACR_LOGIN_SERVER }}/ui_script:${{ github.sha }}
+          IMAGE_TAG="${{ secrets.ACR_LOGIN_SERVER }}/ui_script:${{ github.sha }}"
+          docker build -t $IMAGE_TAG -f ./application/UI_Script/Dockerfile .
+          docker push $IMAGE_TAG
 
-      - name: Update Helm Chart Tags for Azure GitOps
+      ################################################################################
+      # Trivy Image Scan
+      ################################################################################
+      - name: Run Trivy Image Vulnerability Scan (Backend)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "${{ secrets.ACR_LOGIN_SERVER }}/backend:${{ github.sha }}"
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+
+      - name: Run Trivy Image Vulnerability Scan (Frontend)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "${{ secrets.ACR_LOGIN_SERVER }}/frontend:${{ github.sha }}"
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+
+      - name: Run Trivy Image Vulnerability Scan (UI_Script)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "${{ secrets.ACR_LOGIN_SERVER }}/ui_script:${{ github.sha }}"
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '0'
+
+      ################################################################################
+      # GitOps CD Update
+      ################################################################################
+      - name: GitOps CD Update (Bump Helm Chart Image Tags)
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
@@ -47,5 +140,5 @@ jobs:
           sed -i 's/frontendTag:.*/frontendTag: "${{ github.sha }}"/' chart/values.yaml
           sed -i 's/uiScriptTag:.*/uiScriptTag: "${{ github.sha }}"/' chart/values.yaml
           git add chart/values.yaml
-          git commit -m "Azure AKS Deployment: Bump image tags to ${{ github.sha }} [skip ci]" || true
+          git commit -m "Azure GitOps CD: Bump image tags to ${{ github.sha }} [skip ci]" || true
           git push || true
