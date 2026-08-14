@@ -1,25 +1,25 @@
-# 05 - Deploy In-Cluster PostgreSQL StatefulSet on GKE
+# 05 - In-Cluster PostgreSQL Database on GKE
+
+<p align="left">
+  <img src="https://img.shields.io/badge/PostgreSQL-StatefulSet-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" />
+  <img src="https://img.shields.io/badge/Kubernetes-PVC_Storage-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white" />
+</p>
 
 ## 📌 Step Overview
-Deploy the in-cluster **PostgreSQL database** (`postgres:15-alpine`) as a **StatefulSet** with a `10Gi` PVC bound to GKE Persistent Disk storage (`standard-rwo`).
+Deploy an in-cluster PostgreSQL StatefulSet with a `10Gi` PersistentVolumeClaim (PVC) to store cost investigation reports, user auth, and remediation logs.
 
 ---
 
 ## ⚡ Deployment Commands
 
 ```bash
+# Apply PostgreSQL StatefulSet & Service manifests
 kubectl apply -f chart/templates/postgres-statefulset.yaml -n finops
+
+# Verify PostgreSQL Pod & PVC state
+kubectl get pods,pvc -n finops -l app=postgres
 ```
 
 ---
 
-## 🔍 Verification Commands
-
-```bash
-kubectl get pods -l app=postgres -n finops
-kubectl get pvc -n finops
-```
-
----
-
-Next Step: **[06-Traefik Ingress on GKE](06-traefik-ingress-gcp.md)**
+Next Step: **[06-Traefik Ingress Setup on GKE](06-traefik-ingress-gcp.md)**

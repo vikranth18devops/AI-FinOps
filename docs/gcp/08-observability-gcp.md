@@ -1,29 +1,25 @@
-# 08 - Observability Stack on GCP GKE
+# 08 - Observability Stack on GKE
 
-Deploy **Prometheus**, **Grafana**, and **Loki + Promtail** to monitor GKE cluster health.
+<p align="left">
+  <img src="https://img.shields.io/badge/Prometheus-Monitoring-E6522C?style=for-the-badge&logo=prometheus&logoColor=white" />
+  <img src="https://img.shields.io/badge/Grafana-Dashboards-F46800?style=for-the-badge&logo=grafana&logoColor=white" />
+  <img src="https://img.shields.io/badge/Loki-Logging-5294E2?style=for-the-badge&logo=grafana&logoColor=white" />
+</p>
+
+## 📌 Prometheus & Grafana Monitoring
+
+Monitors cluster health and scrapes application metrics from:
+- ⚙️ `finops-backend-service:8000/metrics` (Port 8080 local)
+- 🚀 `finops-ui-script-service:8500/metrics` (Port 8585 local)
 
 ---
 
-## ⚡ Deployment Commands
+## ⚡ Deployment & ServiceMonitor Setup
 
 ```bash
-# Prometheus Operator & Grafana
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts --force-update
-helm repo update
-helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
-  --namespace observability \
-  -f chart/monitoring/prometheus-values.yaml \
-  --wait
-
-# Loki & Promtail
-helm repo add grafana https://grafana.github.io/helm-charts --force-update
-helm repo update
-helm upgrade --install loki grafana/loki-stack \
-  --namespace observability \
-  -f chart/monitoring/loki-values.yaml \
-  --wait
+kubectl apply -f chart/monitoring/servicemonitor-ui-script.yaml -n finops
 ```
 
 ---
 
-Next Step: **[09-One-Click GCP Deployment](09-one-click-gcp-deploy.md)**
+Next Step: **[09-One-Click GCP Deployment Script](09-one-click-gcp-deploy.md)**

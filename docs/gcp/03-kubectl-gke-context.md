@@ -1,24 +1,30 @@
-# 03 - Connect Kubectl Context to GCP GKE
+# 03 - Kubectl GKE Context Setup
+
+<p align="left">
+  <img src="https://img.shields.io/badge/Kubernetes-kubectl-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white" />
+  <img src="https://img.shields.io/badge/Google_Cloud-gcloud_CLI-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white" />
+</p>
 
 ## 📌 Step Overview
-Bind your local `kubectl` CLI context to your **GKE Autopilot** cluster using the `gcloud` SDK.
+Fetch authentication credentials and configure `kubectl` context to connect to your GKE Kubernetes cluster.
 
 ---
 
-## ⚡ Connection Command
+## ⚡ Execution Commands
 
 ```bash
-gcloud container clusters get-credentials "$GKE_CLUSTER_NAME" --region us-central1
-```
+# Set GCP Project ID & Region
+export PROJECT_ID=$(gcloud config get-value project)
+export REGION="us-central1"
+export CLUSTER_NAME="finops-gke-cluster"
 
----
+# Fetch GKE Cluster Credentials
+gcloud container clusters get-credentials $CLUSTER_NAME --region $REGION --project $PROJECT_ID
 
-## 🔍 Verification Command
-
-```bash
+# Verify connection to GKE cluster
 kubectl get nodes -o wide
 ```
 
 ---
 
-Next Step: **[04-Namespaces & Workload Identity](04-namespaces-and-rbac.md)**
+Next Step: **[04-Namespaces and RBAC Setup](04-namespaces-and-rbac.md)**

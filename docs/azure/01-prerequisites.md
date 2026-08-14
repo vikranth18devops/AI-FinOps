@@ -1,5 +1,12 @@
 # 01 - Prerequisites & GitHub Secrets Setup for Azure AKS
 
+<p align="left">
+  <img src="https://img.shields.io/badge/Microsoft_Azure-0089D6?style=for-the-badge&logo=microsoft-azure&logoColor=white" />
+  <img src="https://img.shields.io/badge/GitHub_Secrets-CI%2FCD-2088FF?style=for-the-badge&logo=github-actions&logoColor=white" />
+  <img src="https://img.shields.io/badge/AKS-Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white" />
+  <img src="https://img.shields.io/badge/Terraform-IaC-7B42BC?style=for-the-badge&logo=terraform&logoColor=white" />
+</p>
+
 ## 📌 Prerequisites Checklist
 
 Before deploying the AI Cloud Cost Detective microservices stack to Azure AKS, ensure the following tools are installed and configured:
@@ -15,9 +22,9 @@ Before deploying the AI Cloud Cost Detective microservices stack to Azure AKS, e
 ## 🚀 Microservice Architecture Stack
 
 The application stack consists of 3 microservices located in [`application/`](file:///Users/aarvik/Documents/123/application):
-- **React Frontend**: `application/frontend` (Port 3000)
-- **FastAPI Backend**: `application/backend` (Port 8080)
-- **UI_Script Provisioner**: `application/UI_Script` (Port 8585)
+- 📱 **React Frontend**: `application/frontend` (Port 3000)
+- ⚙️ **FastAPI Backend**: `application/backend` (Port 8080)
+- 🚀 **UI_Script Provisioner**: `application/UI_Script` (Port 8585)
 
 Local Simultaneous Launcher:
 ```bash
