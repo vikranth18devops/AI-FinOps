@@ -43,6 +43,14 @@ resources:
       cpu: 250m
       memory: 256Mi
 
+# HorizontalPodAutoscaler (HPA v2) Configuration
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 60
+  targetMemoryUtilizationPercentage: 75
+
 env:
   # In-cluster Kubernetes PostgreSQL connection string
   DATABASE_URL: "postgresql://finopsadmin:SecretPass123!@postgres-service.finops.svc.cluster.local:5432/cloud_cost_db"

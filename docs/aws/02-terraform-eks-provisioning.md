@@ -1,34 +1,70 @@
-# 02 - Terraform EKS Infrastructure Provisioning
+# 02 - Terraform EKS Infrastructure Provisioning & Remote State Setup
+
+<p align="left">
+  <img src="https://img.shields.io/badge/Terraform-IaC-7B42BC?style=for-the-badge&logo=terraform&logoColor=white" />
+  <img src="https://img.shields.io/badge/Amazon_AWS-S3_Bucket-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" />
+  <img src="https://img.shields.io/badge/EKS-Cluster_Provisioning-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white" />
+</p>
 
 ## 📌 Step Overview
-In this step, you will provision cloud infrastructure on AWS using modular **Terraform** code located in `terraform/aws/`.
-
-The Terraform workflow provisions:
-1. **AWS VPC** (`10.0.0.0/16`) and Public Subnets (`10.0.1.0/24`, `10.0.2.0/24`).
-2. **Internet Gateway** for outbound/inbound traffic.
-3. **AWS Elastic Kubernetes Service (EKS)** cluster (`finops-eks-cluster`) with `t3.xlarge` managed node groups.
-4. **Remote State Backend**: State is stored in an AWS S3 Bucket (`finops-aws-tfstate-2026`) with DynamoDB state locking (`finops-tfstate-locks`).
+In this step, you will setup the AWS S3 & DynamoDB remote state backend and provision cloud infrastructure on AWS using modular **Terraform** code located in [`terraform/aws/`](file:///Users/aarvik/Documents/123/terraform/aws).
 
 ---
 
-## ⚡ Execution Steps
+## 🗄️ Step 1: Create AWS S3 Bucket & DynamoDB Table for Remote State Backend
+
+Run the following AWS CLI commands to create the S3 bucket and DynamoDB lock table for remote state storage:
 
 ```bash
-# Navigate to AWS terraform directory
+# 1. Set environment variables
+export S3_BUCKET_NAME="tfstate-finops-aws-$RANDOM"
+export DYNAMODB_TABLE_NAME="tfstate-locks"
+export AWS_REGION="us-east-1"
+
+# 2. Create S3 Bucket for Terraform State
+aws s3api create-bucket \
+    --bucket $S3_BUCKET_NAME \
+    --region $AWS_REGION
+
+# 3. Enable Versioning on S3 Bucket
+aws s3api put-bucket-versioning \
+    --bucket $S3_BUCKET_NAME \
+    --versioning-configuration Status=Enabled
+
+# 4. Create DynamoDB Table for State Locking
+aws dynamodb create-table \
+    --table-name $DYNAMODB_TABLE_NAME \
+    --attribute-definitions AttributeName=LockID,AttributeType=S \
+    --key-schema AttributeName=LockID,KeyType=HASH \
+    --provisioned-throughput ReadCapacityUnits=5,WriteCapacityUnits=5 \
+    --region $AWS_REGION
+
+echo "================================================================="
+echo "  ✓ AWS S3 Remote State Backend Created Successfully!"
+echo "  • S3 Bucket:       $S3_BUCKET_NAME"
+echo "  • DynamoDB Table:  $DYNAMODB_TABLE_NAME"
+echo "================================================================="
+```
+
+---
+
+## ⚡ Step 2: Provision EKS Infrastructure via Terraform
+
+```bash
 cd terraform/aws
 
-# Initialize Terraform modules & remote S3 backend
-terraform init
+# Initialize Terraform with Remote Backend
+terraform init \
+    -backend-config="bucket=$S3_BUCKET_NAME" \
+    -backend-config="key=aws.eks.tfstate" \
+    -backend-config="region=$AWS_REGION" \
+    -backend-config="dynamodb_table=$DYNAMODB_TABLE_NAME"
 
 # Review execution plan
 terraform plan
 
 # Apply infrastructure configuration
 terraform apply -auto-approve
-
-# Export cluster name variable
-export EKS_CLUSTER_NAME=$(terraform output -raw eks_cluster_name)
-cd ../..
 ```
 
 ---

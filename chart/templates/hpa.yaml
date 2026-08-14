@@ -1,0 +1,73 @@
+{{- if .Values.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: finops-backend-hpa
+  namespace: {{ .Release.Namespace | default "finops" }}
+  labels:
+    app: finops-backend
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: finops-backend
+  minReplicas: {{ .Values.autoscaling.minReplicas | default 2 }}
+  maxReplicas: {{ .Values.autoscaling.maxReplicas | default 10 }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage | default 60 }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.autoscaling.targetMemoryUtilizationPercentage | default 75 }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: finops-frontend-hpa
+  namespace: {{ .Release.Namespace | default "finops" }}
+  labels:
+    app: finops-frontend
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: finops-frontend
+  minReplicas: {{ .Values.autoscaling.minReplicas | default 2 }}
+  maxReplicas: {{ .Values.autoscaling.maxReplicas | default 10 }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage | default 60 }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: finops-ui-script-hpa
+  namespace: {{ .Release.Namespace | default "finops" }}
+  labels:
+    app: finops-ui-script
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: finops-ui-script
+  minReplicas: {{ .Values.autoscaling.minReplicas | default 2 }}
+  maxReplicas: {{ .Values.autoscaling.maxReplicas | default 10 }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage | default 60 }}
+{{- end }}

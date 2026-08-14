@@ -1,0 +1,25 @@
+# Terraform files
+**/.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+
+# Python cache & venv
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+
+# Node.js dependencies & build artifacts
+node_modules/
+dist/
+build/
+.next/
+
+# OS metadata & secrets
+.DS_Store
+*.env
+gcp-key.json
