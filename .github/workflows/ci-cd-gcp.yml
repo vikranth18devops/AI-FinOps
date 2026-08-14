@@ -1,0 +1,55 @@
+name: GCP GKE CI/CD Production Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'application/**'
+      - 'chart/**'
+      - '.github/workflows/ci-cd-gcp.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy-gcp:
+    name: Build & Deploy to GCP GKE (Artifact Registry)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev
+
+      - name: Build & Push Backend Docker Image (GCP GAR)
+        run: |
+          docker build -t ${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/finops-repo/backend:${{ github.sha }} -f ./application/backend/Dockerfile .
+          docker push ${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/finops-repo/backend:${{ github.sha }}
+
+      - name: Build & Push Frontend Docker Image (GCP GAR)
+        run: |
+          docker build -t ${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/finops-repo/frontend:${{ github.sha }} -f ./application/frontend/Dockerfile .
+          docker push ${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/finops-repo/frontend:${{ github.sha }}
+
+      - name: Build & Push UI_Script Provisioner Docker Image (GCP GAR)
+        run: |
+          docker build -t ${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/finops-repo/ui_script:${{ github.sha }} -f ./application/UI_Script/Dockerfile .
+          docker push ${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/finops-repo/ui_script:${{ github.sha }}
+
+      - name: Update Helm Chart Tags for GCP GitOps
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          sed -i 's/backendTag:.*/backendTag: "${{ github.sha }}"/' chart/values.yaml
+          sed -i 's/frontendTag:.*/frontendTag: "${{ github.sha }}"/' chart/values.yaml
+          sed -i 's/uiScriptTag:.*/uiScriptTag: "${{ github.sha }}"/' chart/values.yaml
+          git add chart/values.yaml
+          git commit -m "GCP GKE Deployment: Bump image tags to ${{ github.sha }} [skip ci]" || true
+          git push || true

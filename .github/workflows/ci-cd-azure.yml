@@ -1,0 +1,51 @@
+name: Azure AKS CI/CD Production Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'application/**'
+      - 'chart/**'
+      - '.github/workflows/ci-cd-azure.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy-azure:
+    name: Build & Deploy to Azure AKS (ACR)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Log in to Azure Container Registry (ACR)
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ secrets.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build & Push Backend Docker Image (Azure)
+        run: |
+          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/backend:${{ github.sha }} -f ./application/backend/Dockerfile .
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/backend:${{ github.sha }}
+
+      - name: Build & Push Frontend Docker Image (Azure)
+        run: |
+          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/frontend:${{ github.sha }} -f ./application/frontend/Dockerfile .
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/frontend:${{ github.sha }}
+
+      - name: Build & Push UI_Script Provisioner Docker Image (Azure)
+        run: |
+          docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/ui_script:${{ github.sha }} -f ./application/UI_Script/Dockerfile .
+          docker push ${{ secrets.ACR_LOGIN_SERVER }}/ui_script:${{ github.sha }}
+
+      - name: Update Helm Chart Tags for Azure GitOps
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          sed -i 's/backendTag:.*/backendTag: "${{ github.sha }}"/' chart/values.yaml
+          sed -i 's/frontendTag:.*/frontendTag: "${{ github.sha }}"/' chart/values.yaml
+          sed -i 's/uiScriptTag:.*/uiScriptTag: "${{ github.sha }}"/' chart/values.yaml
+          git add chart/values.yaml
+          git commit -m "Azure AKS Deployment: Bump image tags to ${{ github.sha }} [skip ci]" || true
+          git push || true

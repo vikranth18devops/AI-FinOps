@@ -1,0 +1,55 @@
+name: AWS EKS CI/CD Production Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'application/**'
+      - 'chart/**'
+      - '.github/workflows/ci-cd-aws.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy-aws:
+    name: Build & Deploy to AWS EKS (ECR)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+
+      - name: Log in to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build & Push Backend Docker Image (AWS ECR)
+        run: |
+          docker build -t ${{ steps.login-ecr.outputs.registry }}/finops-backend:${{ github.sha }} -f ./application/backend/Dockerfile .
+          docker push ${{ steps.login-ecr.outputs.registry }}/finops-backend:${{ github.sha }}
+
+      - name: Build & Push Frontend Docker Image (AWS ECR)
+        run: |
+          docker build -t ${{ steps.login-ecr.outputs.registry }}/finops-frontend:${{ github.sha }} -f ./application/frontend/Dockerfile .
+          docker push ${{ steps.login-ecr.outputs.registry }}/finops-frontend:${{ github.sha }}
+
+      - name: Build & Push UI_Script Provisioner Docker Image (AWS ECR)
+        run: |
+          docker build -t ${{ steps.login-ecr.outputs.registry }}/finops-ui-script:${{ github.sha }} -f ./application/UI_Script/Dockerfile .
+          docker push ${{ steps.login-ecr.outputs.registry }}/finops-ui-script:${{ github.sha }}
+
+      - name: Update Helm Chart Tags for AWS GitOps
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          sed -i 's/backendTag:.*/backendTag: "${{ github.sha }}"/' chart/values.yaml
+          sed -i 's/frontendTag:.*/frontendTag: "${{ github.sha }}"/' chart/values.yaml
+          sed -i 's/uiScriptTag:.*/uiScriptTag: "${{ github.sha }}"/' chart/values.yaml
+          git add chart/values.yaml
+          git commit -m "AWS EKS Deployment: Bump image tags to ${{ github.sha }} [skip ci]" || true
+          git push || true

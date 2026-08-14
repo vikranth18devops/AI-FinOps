@@ -1,13 +1,10 @@
 # 10 - GitHub Actions CI/CD Pipeline for AWS EKS
 
-The CI/CD pipeline defined in [`.github/workflows/ci-cd.yml`](file:///Users/aarvik/Documents/123/.github/workflows/ci-cd.yml) builds and pushes Docker images for `backend`, `frontend`, and `ui_script`:
+The dedicated AWS EKS CI/CD pipeline is defined in [`.github/workflows/ci-cd-aws.yml`](file:///Users/aarvik/Documents/123/.github/workflows/ci-cd-aws.yml):
 
-```yaml
-- name: Build & Push UI_Script Provisioner Docker Image
-  run: |
-    docker build -t ${{ secrets.ACR_LOGIN_SERVER }}/ui_script:${{ github.sha }} -f ./application/UI_Script/Dockerfile .
-    docker push ${{ secrets.ACR_LOGIN_SERVER }}/ui_script:${{ github.sha }}
-```
+- Authenticates to Amazon ECR via `aws-actions/amazon-ecr-login`.
+- Builds & pushes `finops-backend`, `finops-frontend`, and `finops-ui-script` container images.
+- Automatically updates `chart/values.yaml` image tags for ArgoCD GitOps synchronization.
 
 ---
 
