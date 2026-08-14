@@ -1,15 +1,24 @@
-name: CI/CD Production Pipeline
+name: CI/CD Master Pipeline (Manual Dispatch Only)
 
 on:
-  push:
-    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  packages: write
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: Log in to Azure Container Registry (ACR)
         uses: azure/docker-login@v1
@@ -42,4 +51,4 @@ jobs:
           sed -i 's/uiScriptTag:.*/uiScriptTag: "${{ github.sha }}"/' chart/values.yaml
           git add chart/values.yaml
           git commit -m "Bump deployment tags for backend, frontend, and ui_script to ${{ github.sha }} [skip ci]" || true
-          git push || true
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main || true

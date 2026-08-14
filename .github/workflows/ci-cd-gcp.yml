@@ -4,58 +4,70 @@ on:
   push:
     branches: [ "main" ]
     paths:
-      - 'application/**'
-      - 'chart/**'
-      - 'script_to_create_Az/**'
+      - 'docs/gcp/**'
+      - 'terraform/gcp/**'
       - '.github/workflows/ci-cd-gcp.yml'
+      - 'deploy-gcp.sh'
   workflow_dispatch:
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
-  pipeline:
-    name: Enterprise DevSecOps CI/CD Pipeline (GCP GKE)
+  ################################################################################
+  # 1. Compile & Code Validation (Parallel)
+  ################################################################################
+  compile-validation:
+    name: ⚡ Compile & Code Validation
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      ################################################################################
-      # Compile & Code Validation
-      ################################################################################
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
-
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
-
       - name: Compile Backend & UI_Script Python Syntax
         run: |
           python -m py_compile ./application/backend/main.py
           python -m py_compile ./application/UI_Script/server.py
-
       - name: Compile & Validate Frontend React TypeScript Code
         run: |
           cd application/frontend
           npm ci
           npm run build
 
-      ################################################################################
-      # Gitleaks Secret Scanning
-      ################################################################################
+  ################################################################################
+  # 2. Gitleaks Secret Scan (Parallel)
+  ################################################################################
+  gitleaks-scan:
+    name: 🔐 Gitleaks Secret Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
       - name: Run Gitleaks Secret Scanner
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
 
-      ################################################################################
-      # Trivy Filesystem Scan
-      ################################################################################
+  ################################################################################
+  # 3. Trivy Filesystem Vulnerability Scan (Parallel)
+  ################################################################################
+  trivy-fs-scan:
+    name: 🛡️ Trivy Filesystem Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
       - name: Run Trivy Filesystem Vulnerability Scan
         uses: aquasecurity/trivy-action@master
         with:
@@ -65,50 +77,28 @@ jobs:
           severity: 'CRITICAL,HIGH'
           exit-code: '0'
 
-      ################################################################################
-      # GCP Authentication & Docker Configuration
-      ################################################################################
+  ################################################################################
+  # 4. Backend Docker Build & Push (Parallel)
+  ################################################################################
+  backend-build:
+    name: 🐳 Backend Docker Build & Push (GCP GAR)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
-
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v1
-
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev
-
-      ################################################################################
-      # Backend Docker Build
-      ################################################################################
-      - name: Backend Docker Build & Push (GCP GAR)
+      - name: Build & Push Backend Docker Image
         run: |
           IMAGE_TAG="${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/finops-repo/backend:${{ github.sha }}"
           docker build -t $IMAGE_TAG -f ./application/backend/Dockerfile .
           docker push $IMAGE_TAG
-
-      ################################################################################
-      # Frontend Docker Build
-      ################################################################################
-      - name: Frontend Docker Build & Push (GCP GAR)
-        run: |
-          IMAGE_TAG="${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/finops-repo/frontend:${{ github.sha }}"
-          docker build -t $IMAGE_TAG -f ./application/frontend/Dockerfile .
-          docker push $IMAGE_TAG
-
-      ################################################################################
-      # UI_Script Provisioner Docker Build
-      ################################################################################
-      - name: UI_Script Provisioner Docker Build & Push (GCP GAR)
-        run: |
-          IMAGE_TAG="${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/finops-repo/ui_script:${{ github.sha }}"
-          docker build -t $IMAGE_TAG -f ./application/UI_Script/Dockerfile .
-          docker push $IMAGE_TAG
-
-      ################################################################################
-      # Trivy Image Scan
-      ################################################################################
       - name: Run Trivy Image Vulnerability Scan (Backend)
         uses: aquasecurity/trivy-action@master
         with:
@@ -117,6 +107,28 @@ jobs:
           severity: 'CRITICAL,HIGH'
           exit-code: '0'
 
+  ################################################################################
+  # 5. Frontend Docker Build & Push (Parallel)
+  ################################################################################
+  frontend-build:
+    name: 📱 Frontend Docker Build & Push (GCP GAR)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev
+      - name: Build & Push Frontend Docker Image
+        run: |
+          IMAGE_TAG="${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/finops-repo/frontend:${{ github.sha }}"
+          docker build -t $IMAGE_TAG -f ./application/frontend/Dockerfile .
+          docker push $IMAGE_TAG
       - name: Run Trivy Image Vulnerability Scan (Frontend)
         uses: aquasecurity/trivy-action@master
         with:
@@ -125,6 +137,28 @@ jobs:
           severity: 'CRITICAL,HIGH'
           exit-code: '0'
 
+  ################################################################################
+  # 6. UI_Script Provisioner Docker Build & Push (Parallel)
+  ################################################################################
+  ui-script-build:
+    name: 🚀 UI_Script Provisioner Docker Build & Push (GCP GAR)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev
+      - name: Build & Push UI_Script Provisioner Docker Image
+        run: |
+          IMAGE_TAG="${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/finops-repo/ui_script:${{ github.sha }}"
+          docker build -t $IMAGE_TAG -f ./application/UI_Script/Dockerfile .
+          docker push $IMAGE_TAG
       - name: Run Trivy Image Vulnerability Scan (UI_Script)
         uses: aquasecurity/trivy-action@master
         with:
@@ -133,9 +167,21 @@ jobs:
           severity: 'CRITICAL,HIGH'
           exit-code: '0'
 
-      ################################################################################
-      # GitOps CD Update
-      ################################################################################
+  ################################################################################
+  # 7. GitOps CD Update Job (Runs after parallel builds finish)
+  ################################################################################
+  gitops-cd:
+    name: ⛵ GitOps CD Helm Update (GCP)
+    needs: [backend-build, frontend-build, ui-script-build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
       - name: GitOps CD Update (Bump Helm Chart Image Tags)
         run: |
           git config --global user.name "github-actions[bot]"
@@ -145,4 +191,4 @@ jobs:
           sed -i 's/uiScriptTag:.*/uiScriptTag: "${{ github.sha }}"/' chart/values.yaml
           git add chart/values.yaml
           git commit -m "GCP GitOps CD: Bump image tags to ${{ github.sha }} [skip ci]" || true
-          git push || true
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main || true
