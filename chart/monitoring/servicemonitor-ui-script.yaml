@@ -1,0 +1,16 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: finops-ui-script-monitor
+  namespace: finops
+  labels:
+    release: prometheus
+    app: finops-ui-script
+spec:
+  selector:
+    matchLabels:
+      app: finops-ui-script
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 15s

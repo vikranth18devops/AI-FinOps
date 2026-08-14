@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: finops-backend-service
+  namespace: finops
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+      name: http
+  selector:
+    app: finops-backend
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: finops-frontend-service
+  namespace: finops
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+      name: http
+  selector:
+    app: finops-frontend
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: finops-ui-script-service
+  namespace: finops
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8500
+      targetPort: 8500
+      protocol: TCP
+      name: http
+  selector:
+    app: finops-ui-script

@@ -1,0 +1,13 @@
+# Loki & Promtail Stack Helm Values
+loki:
+  enabled: true
+  persistence:
+    enabled: true
+    size: 20Gi
+
+promtail:
+  enabled: true
+  config:
+    snippets:
+      pipelineStages:
+        - cri: {}

@@ -1,0 +1,49 @@
+replicaCount: 3
+
+image:
+  repository: myregistry.azurecr.io/finops
+  pullPolicy: IfNotPresent
+  frontendTag: "frontend-v1.0.0"
+  backendTag: "backend-v1.0.0"
+  uiScriptTag: "ui-script-v1.0.0"
+
+service:
+  frontendPort: 80
+  backendPort: 8000
+  uiScriptPort: 8500
+
+# In-Cluster Kubernetes PostgreSQL StatefulSet Configuration
+postgres:
+  enabled: true
+  user: "finopsadmin"
+  password: "SecretPass123!"
+  database: "cloud_cost_db"
+  storageSize: "10Gi"
+
+resources:
+  frontend:
+    limits:
+      cpu: 250m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  backend:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  uiScript:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+env:
+  # In-cluster Kubernetes PostgreSQL connection string
+  DATABASE_URL: "postgresql://finopsadmin:SecretPass123!@postgres-service.finops.svc.cluster.local:5432/cloud_cost_db"
+  JWT_SECRET: "super_secure_jwt_secret_key_2026"

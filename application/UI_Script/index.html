@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-Cloud Provisioning Studio | Real-Time Execution Terminal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Outfit', sans-serif; background-color: #030611; color: #f3f4f6; }
+    .font-display { font-family: 'Space Grotesk', sans-serif; }
+    .font-code { font-family: 'Fira Code', monospace; }
+
+    .glass-card { background: rgba(10, 15, 29, 0.85); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .glass-card-accent { background: rgba(12, 18, 34, 0.92); backdrop-filter: blur(16px); border: 1px solid rgba(124, 58, 237, 0.35); box-shadow: 0 0 35px rgba(124, 58, 237, 0.18); }
+    
+    .glow-emerald { box-shadow: 0 0 20px rgba(16, 185, 129, 0.3); }
+    .glow-cyan { box-shadow: 0 0 20px rgba(6, 182, 212, 0.3); }
+    .glow-amber { box-shadow: 0 0 20px rgba(245, 158, 11, 0.35); }
+    .glow-rose { box-shadow: 0 0 18px rgba(244, 63, 94, 0.25); }
+
+    /* Animated Terminal Matrix Scanlines & Fade Effects */
+    @keyframes scanline {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(800%); }
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    @keyframes logLineFade {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-scanline {
+      animation: scanline 7s linear infinite;
+    }
+    .animate-cursor {
+      animation: blink 1s step-end infinite;
+    }
+    .log-line {
+      animation: logLineFade 0.2s ease-out forwards;
+    }
+    .terminal-bg {
+      background: radial-gradient(circle at 50% 0%, #070d1e 0%, #02050c 100%);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.85), 0 0 25px rgba(56, 189, 248, 0.12);
+    }
+  </style>
+</head>
+<body class="min-h-screen h-screen max-h-screen flex items-center justify-center p-3 sm:p-5 bg-[#030611] text-slate-100 overflow-hidden selection:bg-cyan-500 selection:text-white">
+  
+  <!-- CENTERED CONTAINER CARD -->
+  <div class="max-w-6xl w-full h-full max-h-[92vh] glass-card-accent rounded-3xl p-5 shadow-2xl flex flex-col justify-between overflow-hidden">
+    
+    <!-- HEADER BAR & CLOUD AUTH STATUS -->
+    <header class="flex items-center justify-between border-b border-indigo-500/20 pb-3 shrink-0">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 via-indigo-500 to-purple-500 p-0.5 shadow-lg flex items-center justify-center glow-cyan">
+          <div class="w-full h-full bg-[#070b19] rounded-[10px] flex items-center justify-center">
+            <svg id="headerCloudIcon" class="w-5 h-5 text-cyan-400" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M58.3 8.3L34.1 48.6L12.4 82.5H35.8L79.1 8.3H58.3Z" fill="#38BDF8"/>
+              <path d="M12.4 82.5L34.1 48.6L58.3 8.3H37.5L3.6 62.4C1.3 66.1 1.6 70.8 4.3 74.2L12.4 82.5Z" fill="#0284C7"/>
+              <path d="M35.8 82.5H86.2C91.4 82.5 94.7 76.9 92.1 72.4L79.1 49.7L58.3 8.3H79.1L92.1 31C94.7 35.5 94.7 41.1 92.1 45.6L71.3 82.5H35.8Z" fill="#0ea5e9"/>
+            </svg>
+          </div>
+        </div>
+        <div>
+          <h1 class="text-base font-extrabold text-white tracking-tight font-display flex items-center space-x-2">
+            <span class="bg-clip-text text-transparent bg-gradient-to-r from-white via-cyan-200 to-purple-300">
+              Multi-Cloud Provisioning Studio
+            </span>
+            <span class="text-[9px] font-code bg-cyan-950/80 text-cyan-300 border border-cyan-500/40 px-2 py-0.5 rounded-full font-bold">
+              Azure • AWS • GCP
+            </span>
+          </h1>
+          <p class="text-[10px] font-code text-slate-400">script_to_create_Az/UI_Script</p>
+        </div>
+      </div>
+
+      <!-- LIVE AUTHENTICATION BADGE & LOGIN BUTTON -->
+      <div class="flex items-center space-x-2.5 font-code text-[11px]">
+        <div id="authStatusText" class="flex items-center space-x-2 text-slate-300 bg-[#060a1a] px-3 py-1 rounded-xl border border-indigo-500/30">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+          <span class="text-[10px]">Checking Auth...</span>
+        </div>
+
+        <button onclick="triggerLogin()" class="bg-gradient-to-r from-cyan-500 via-indigo-600 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white px-3 py-1 rounded-xl text-[10px] font-bold shadow transition-all cursor-pointer glow-cyan">
+          🔐 Provider Login
+        </button>
+      </div>
+    </header>
+
+    <!-- MAIN SCREENVIEW GRID (SINGLE SCREENVIEW FIT) -->
+    <main class="flex-1 my-3 grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-0 overflow-hidden">
+      
+      <!-- LEFT PANEL: COMPACT PARAMETERS & PROVIDER SELECTOR (5 COLS) -->
+      <div class="lg:col-span-5 glass-card rounded-2xl p-3.5 flex flex-col justify-between space-y-2.5 font-code text-[11px] overflow-y-auto">
+        
+        <div class="space-y-2.5">
+          
+          <!-- CLOUD PROVIDER SELECTOR PILLS -->
+          <div class="space-y-1">
+            <label class="block text-[9.5px] font-bold text-cyan-300 uppercase tracking-wider">Select Cloud Provider</label>
+            <div class="grid grid-cols-3 gap-2">
+              
+              <!-- AZURE BUTTON -->
+              <button onclick="setCloudProvider('azure')" id="btnProvAzure" class="bg-[#041a30] border border-cyan-400 text-white py-2 px-2 rounded-xl text-[10.5px] font-bold transition-all cursor-pointer shadow-[0_0_20px_rgba(56,189,248,0.4)] flex items-center justify-center space-x-1.5">
+                <svg class="w-4 h-4 shrink-0" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M58.3 8.3L34.1 48.6L12.4 82.5H35.8L79.1 8.3H58.3Z" fill="#38BDF8"/>
+                  <path d="M12.4 82.5L34.1 48.6L58.3 8.3H37.5L3.6 62.4C1.3 66.1 1.6 70.8 4.3 74.2L12.4 82.5Z" fill="#0284C7"/>
+                  <path d="M35.8 82.5H86.2C91.4 82.5 94.7 76.9 92.1 72.4L79.1 49.7L58.3 8.3H79.1L92.1 31C94.7 35.5 94.7 41.1 92.1 45.6L71.3 82.5H35.8Z" fill="#0ea5e9"/>
+                </svg>
+                <span>Azure</span>
+              </button>
+
+              <!-- AWS BUTTON -->
+              <button onclick="setCloudProvider('aws')" id="btnProvAws" class="bg-[#080e20] border border-slate-700 text-slate-400 hover:text-white py-2 px-2 rounded-xl text-[10.5px] font-bold transition-all cursor-pointer flex items-center justify-center space-x-1.5">
+                <svg class="w-4 h-4 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M6 19a4 4 0 0 1-2-7.5 5 5 0 0 1 9.5-2.2 4 4 0 0 1 4.5 4.7A4 4 0 0 1 18 19H6z" fill="rgba(245, 158, 11, 0.2)"/>
+                  <path d="M12 12v5m-2.5-2.5L12 17l2.5-2.5"/>
+                </svg>
+                <span>AWS</span>
+              </button>
+
+              <!-- GCP BUTTON -->
+              <button onclick="setCloudProvider('gcp')" id="btnProvGcp" class="bg-[#080e20] border border-slate-700 text-slate-400 hover:text-white py-2 px-2 rounded-xl text-[10.5px] font-bold transition-all cursor-pointer flex items-center justify-center space-x-1.5">
+                <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none">
+                  <path d="M19.35 10.04A7.49 7.49 0 0012 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 000 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z" fill="url(#gcpGradient)"/>
+                  <defs>
+                    <linearGradient id="gcpGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#4285F4"/>
+                      <stop offset="33%" stop-color="#EA4335"/>
+                      <stop offset="66%" stop-color="#FBBC05"/>
+                      <stop offset="100%" stop-color="#34A853"/>
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <span>GCP</span>
+              </button>
+
+            </div>
+          </div>
+
+          <!-- RESOURCE PREFIX INPUT -->
+          <div class="space-y-1">
+            <label class="block text-[9.5px] font-bold text-purple-300 uppercase tracking-wider">Resource Name Prefix</label>
+            <input type="text" id="prefix" value="snapthreadz" class="w-full bg-[#040713] border border-purple-500/40 rounded-lg px-2.5 py-1.5 text-[11px] text-white focus:outline-none focus:border-cyan-400 transition-all font-code" />
+            <div class="flex items-center space-x-1 pt-0.5">
+              <span class="text-[8.5px] text-slate-500">Presets:</span>
+              <button onclick="setPrefixVal('snapthreadz')" class="bg-[#070c1e] border border-slate-800 px-2 py-0.5 rounded text-[8.5px] text-cyan-300 hover:text-white cursor-pointer hover:border-cyan-500/50">snapthreadz</button>
+              <button onclick="setPrefixVal('finops-cloud')" class="bg-[#070c1e] border border-slate-800 px-2 py-0.5 rounded text-[8.5px] text-cyan-300 hover:text-white cursor-pointer hover:border-cyan-500/50">finops-cloud</button>
+              <button onclick="setPrefixVal('cloud-devops')" class="bg-[#070c1e] border border-slate-800 px-2 py-0.5 rounded text-[8.5px] text-cyan-300 hover:text-white cursor-pointer hover:border-cyan-500/50">cloud-devops</button>
+            </div>
+          </div>
+
+          <!-- DYNAMIC REGION SELECTOR -->
+          <div class="space-y-1">
+            <label class="block text-[9.5px] font-bold text-cyan-300 uppercase tracking-wider" id="regionLabel">Azure Region (Location)</label>
+            <select id="location" class="w-full bg-[#040713] border border-cyan-500/40 rounded-lg px-2.5 py-1.5 text-[11px] text-white focus:outline-none focus:border-cyan-400 cursor-pointer font-code">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+
+          <!-- TARGET ENVIRONMENT CREATION & MULTI-SELECT MATRICES -->
+          <div class="space-y-1.5 pt-0.5">
+            <div class="flex items-center justify-between">
+              <label class="block text-[9.5px] font-bold text-indigo-300 uppercase tracking-wider">Environments & FinOps Stacks</label>
+              <span id="summaryResourceCount" class="text-[9.5px] text-cyan-300 font-bold bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-800">
+                36 Resources Total
+              </span>
+            </div>
+
+            <!-- ADD CUSTOM ENVIRONMENT INPUT FIELD & PRESETS -->
+            <div class="space-y-1">
+              <div class="flex items-center space-x-1.5">
+                <input type="text" id="customEnvInput" placeholder="Add env (e.g. dev, qa, prd, stg)" class="flex-1 bg-[#040713] border border-indigo-500/40 rounded-lg px-2.5 py-1 text-[10px] text-white focus:outline-none focus:border-cyan-400 font-code" />
+                <button onclick="addCustomEnv()" type="button" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold px-2.5 py-1 rounded-lg text-[10px] cursor-pointer transition-all shrink-0 shadow">
+                  + Add Env
+                </button>
+              </div>
+              <div class="flex items-center space-x-1">
+                <span class="text-[8.5px] text-slate-500">Quick Add:</span>
+                <button onclick="quickAddEnv('dev')" class="bg-[#070c1e] border border-slate-800 px-1.5 py-0.5 rounded text-[8.5px] text-emerald-300 hover:text-white cursor-pointer">+ dev</button>
+                <button onclick="quickAddEnv('qa')" class="bg-[#070c1e] border border-slate-800 px-1.5 py-0.5 rounded text-[8.5px] text-cyan-300 hover:text-white cursor-pointer">+ qa</button>
+                <button onclick="quickAddEnv('prd')" class="bg-[#070c1e] border border-slate-800 px-1.5 py-0.5 rounded text-[8.5px] text-purple-300 hover:text-white cursor-pointer">+ prd</button>
+                <button onclick="quickAddEnv('stg')" class="bg-[#070c1e] border border-slate-800 px-1.5 py-0.5 rounded text-[8.5px] text-amber-300 hover:text-white cursor-pointer">+ stg</button>
+              </div>
+            </div>
+
+            <!-- DYNAMIC ENVIRONMENT CHIPS GRID -->
+            <div id="envChipsContainer" class="grid grid-cols-3 gap-1.5 text-[9.5px]">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+
+        <!-- ACTION BUTTONS -->
+        <div class="space-y-1.5 pt-1.5 border-t border-indigo-500/20">
+          <button id="btnProvision" onclick="runProvision(false)" class="w-full bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-black py-2.5 px-3 rounded-xl text-[11px] transition-all cursor-pointer shadow-lg glow-emerald flex items-center justify-center space-x-1.5 uppercase tracking-wider">
+            <span id="btnProvisionText">🚀 Create 36 Azure Resources</span>
+          </button>
+
+          <button id="btnDestroy" onclick="runProvision(true)" class="w-full bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 hover:text-white font-bold py-2 px-3 rounded-xl text-[10.5px] transition-all cursor-pointer flex items-center justify-center space-x-1.5 glow-rose">
+            <span>🧹 Teardown Stacks (--destroy)</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- RIGHT PANEL: ANIMATED REAL-TIME DAEMON TERMINAL (7 COLS) -->
+      <div class="lg:col-span-7 terminal-bg rounded-2xl p-3.5 flex flex-col justify-between font-code min-h-0 overflow-hidden relative">
+        
+        <!-- SCANLINE HOLOGRAM OVERLAY -->
+        <div class="absolute inset-0 bg-gradient-to-b from-cyan-500/5 via-transparent to-purple-500/5 opacity-40 pointer-events-none animate-scanline"></div>
+
+        <!-- CONSOLE WINDOW HEADER BAR WITH CANCEL BUTTON -->
+        <div class="flex items-center justify-between border-b border-cyan-500/20 pb-2 shrink-0 relative z-10">
+          <div class="flex items-center space-x-2">
+            <div class="w-2.5 h-2.5 rounded-full bg-rose-500/90 shadow-[0_0_8px_rgba(244,63,94,0.6)]"></div>
+            <div class="w-2.5 h-2.5 rounded-full bg-amber-500/90 shadow-[0_0_8px_rgba(245,158,11,0.6)]"></div>
+            <div class="w-2.5 h-2.5 rounded-full bg-emerald-500/90 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></div>
+            <span class="text-slate-300 text-[10.5px] font-bold ml-1.5 font-display tracking-wide" id="consoleTitle">AZURE Provisioner Daemon</span>
+          </div>
+
+          <div class="flex items-center space-x-2">
+            <!-- CANCEL TERMINAL EXECUTION BUTTON -->
+            <button id="btnCancelExecution" onclick="cancelProvisioning()" class="hidden bg-rose-500/20 hover:bg-rose-500/40 border border-rose-500/50 text-rose-300 hover:text-white px-2.5 py-0.5 rounded text-[9.5px] font-bold transition-all cursor-pointer glow-rose">
+              ⛔ Cancel Execution
+            </button>
+
+            <span id="logStatus" class="text-[9.5px] text-cyan-300 bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-700/60 font-bold uppercase tracking-wider">
+              IDLE
+            </span>
+          </div>
+        </div>
+
+        <!-- LIVE REAL-TIME RESOURCE PROGRESS BAR -->
+        <div id="liveProgressBarContainer" class="hidden my-1.5 bg-[#030715] p-2 rounded-xl border border-cyan-500/30 relative z-10">
+          <div class="flex items-center justify-between text-[9.5px] font-bold pb-1">
+            <span class="text-cyan-300" id="progressResourceLabel">Processing Resources...</span>
+            <span class="text-emerald-400" id="progressPercentLabel">0%</span>
+          </div>
+          <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
+            <div id="progressBarFill" class="bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 h-full w-0 transition-all duration-300 glow-emerald"></div>
+          </div>
+        </div>
+
+        <!-- TERMINAL LOG OUTPUT WINDOW -->
+        <div id="outputConsole" class="flex-1 my-2 p-2.5 text-slate-300 min-h-0 overflow-y-auto whitespace-pre-wrap leading-relaxed select-text text-[10px] sm:text-[10.5px] font-code space-y-1 relative z-10">
+          <div class="text-slate-400">Ready. Select Cloud Provider (Azure / AWS / GCP) and click <span class="text-emerald-400 font-bold">'Create Resources'</span> to launch deployment.</div>
+        </div>
+
+        <!-- DIRECT PROVIDER CONSOLE LINKS BAR -->
+        <div id="portalLinksContainer" class="hidden shrink-0 pt-2 border-t border-cyan-500/20 space-y-1 relative z-10">
+          <span class="text-[9.5px] text-emerald-400 font-bold block uppercase tracking-wider">✓ Resources Provisioned! View in Provider Console:</span>
+          <div id="portalLinksList" class="grid grid-cols-3 gap-1.5"></div>
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- FOOTER STATUS BAR -->
+    <footer class="border-t border-slate-800/80 pt-2 shrink-0 flex items-center justify-between text-[9.5px] font-code text-slate-400">
+      <div class="flex items-center space-x-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span id="footerSubText">Subscription: Checking...</span>
+      </div>
+      <div>AI Cloud Cost Detective &copy; 2026</div>
+    </footer>
+
+  </div>
+
+  <script>
+    let currentProvider = 'azure';
+    let availableEnvs = [];
+    let isExecuting = false;
+    let resourceStepCount = 0;
+
+    function setPrefixVal(val) {
+      document.getElementById('prefix').value = val;
+      renderEnvChips();
+    }
+
+    function quickAddEnv(envName) {
+      if (!availableEnvs.includes(envName)) {
+        availableEnvs.push(envName);
+        renderEnvChips();
+      }
+    }
+
+    function addCustomEnv() {
+      const input = document.getElementById('customEnvInput');
+      const rawVal = input.value.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (!rawVal) return;
+      if (!availableEnvs.includes(rawVal)) {
+        availableEnvs.push(rawVal);
+        input.value = '';
+        renderEnvChips();
+      }
+    }
+
+    document.getElementById('customEnvInput').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addCustomEnv();
+      }
+    });
+
+    function renderEnvChips() {
+      const p = document.getElementById('prefix').value || 'snapthreadz';
+      const suffix = currentProvider === 'aws' ? 'vpc' : currentProvider === 'gcp' ? 'project' : 'rg';
+      const container = document.getElementById('envChipsContainer');
+      const counter = document.getElementById('summaryResourceCount');
+      const btnProvision = document.getElementById('btnProvision');
+      const btnText = document.getElementById('btnProvisionText');
+
+      container.innerHTML = '';
+
+      if (availableEnvs.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-3 py-2 text-center text-slate-400 text-[9.5px] italic border border-dashed border-indigo-500/30 rounded-lg bg-[#040715]">
+            No environments added. Use 'Quick Add' (+ dev, + qa, + prd) or type above.
+          </div>
+        `;
+        counter.innerText = '0 Resources (Add Env Below)';
+        btnText.innerText = '⚠️ Add an Environment First';
+        btnProvision.disabled = true;
+        btnProvision.classList.add('opacity-50', 'cursor-not-allowed');
+        return;
+      }
+
+      btnProvision.disabled = false;
+      btnProvision.classList.remove('opacity-50', 'cursor-not-allowed');
+
+      availableEnvs.forEach((env) => {
+        const borderCol = env === 'dev' ? 'border-emerald-500/40 text-emerald-300' : env === 'qa' ? 'border-cyan-500/40 text-cyan-300' : env === 'prd' ? 'border-purple-500/40 text-purple-300' : 'border-indigo-500/40 text-indigo-300';
+        
+        container.innerHTML += `
+          <div class="bg-[#050918] border ${borderCol} p-1.5 rounded-lg flex flex-col justify-between group relative">
+            <div class="flex items-center justify-between">
+              <span class="font-bold block uppercase">${env} (12)</span>
+              <button onclick="removeEnv('${env}')" class="text-slate-500 hover:text-rose-400 font-bold text-[11px] cursor-pointer px-0.5 transition-colors" title="Delete ${env.toUpperCase()} environment">×</button>
+            </div>
+            <span class="text-slate-400 block truncate text-[8.5px]">${p}-${env}-${suffix}</span>
+          </div>
+        `;
+      });
+
+      const totalResources = availableEnvs.length * 12;
+      counter.innerText = `${totalResources} Resources Total`;
+      btnText.innerText = `🚀 Create ${totalResources} ${currentProvider.toUpperCase()} Resources`;
+    }
+
+    function removeEnv(envName) {
+      availableEnvs = availableEnvs.filter(e => e !== envName);
+      renderEnvChips();
+    }
+
+    document.getElementById('prefix').addEventListener('input', renderEnvChips);
+
+    async function setCloudProvider(prov) {
+      currentProvider = prov;
+
+      const azureBtn = document.getElementById('btnProvAzure');
+      const awsBtn = document.getElementById('btnProvAws');
+      const gcpBtn = document.getElementById('btnProvGcp');
+
+      const inactiveStyle = "bg-[#080e20] border border-slate-700 text-slate-400 hover:text-white py-2 px-2 rounded-xl text-[10.5px] font-bold transition-all cursor-pointer flex items-center justify-center space-x-1.5";
+
+      azureBtn.className = inactiveStyle;
+      awsBtn.className = inactiveStyle;
+      gcpBtn.className = inactiveStyle;
+
+      if (prov === 'azure') {
+        azureBtn.className = "bg-[#041a30] border border-cyan-400 text-white py-2 px-2 rounded-xl text-[10.5px] font-bold transition-all cursor-pointer shadow-[0_0_20px_rgba(56,189,248,0.4)] flex items-center justify-center space-x-1.5 glow-cyan";
+      } else if (prov === 'aws') {
+        awsBtn.className = "bg-[#2b1803] border border-amber-400 text-white py-2 px-2 rounded-xl text-[10.5px] font-bold transition-all cursor-pointer shadow-[0_0_20px_rgba(245,158,11,0.4)] flex items-center justify-center space-x-1.5 glow-amber";
+      } else if (prov === 'gcp') {
+        gcpBtn.className = "bg-[#210910] border border-rose-400 text-white py-2 px-2 rounded-xl text-[10.5px] font-bold transition-all cursor-pointer shadow-[0_0_20px_rgba(244,63,94,0.4)] flex items-center justify-center space-x-1.5 glow-rose";
+      }
+
+      const pTitle = prov.toUpperCase();
+      document.getElementById('regionLabel').innerText = `${pTitle} Region (Location)`;
+      document.getElementById('consoleTitle').innerText = `${pTitle} Provisioner Daemon`;
+
+      renderEnvChips();
+      await fetchRegions(prov);
+      await checkAuthStatus();
+    }
+
+    async function fetchRegions(prov) {
+      const sel = document.getElementById('location');
+      sel.innerHTML = `<option value="">Fetching live ${prov.toUpperCase()} regions...</option>`;
+      try {
+        const res = await fetch(`/api/regions?provider=${prov}`);
+        const data = await res.json();
+        sel.innerHTML = '';
+        (data.regions || []).forEach(r => {
+          sel.innerHTML += `<option value="${r.code}">${r.name}</option>`;
+        });
+      } catch (err) {
+        sel.innerHTML = `<option value="default">Default Region</option>`;
+      }
+    }
+
+    async function checkAuthStatus() {
+      const statusText = document.getElementById('authStatusText');
+      const footerSub = document.getElementById('footerSubText');
+      try {
+        const res = await fetch(`/api/auth/status?provider=${currentProvider}`);
+        const data = await res.json();
+        if (data.authenticated) {
+          statusText.innerHTML = `
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="text-emerald-400 font-bold text-[10px]">${data.user}</span>
+          `;
+          footerSub.innerText = `Active ${currentProvider.toUpperCase()} Account: ${data.subscription_name || data.user}`;
+        } else {
+          statusText.innerHTML = `
+            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+            <span class="text-rose-400 font-bold text-[10px]">Not Logged In</span>
+          `;
+          footerSub.innerText = `${currentProvider.toUpperCase()} Status: Not Authenticated`;
+        }
+      } catch (err) {
+        statusText.innerHTML = `<span class="text-rose-400 text-[10px]">Auth Error</span>`;
+      }
+    }
+
+    async function triggerLogin() {
+      const consoleBox = document.getElementById('outputConsole');
+      consoleBox.innerHTML = `<div class="text-cyan-300 font-bold log-line">[$] Triggering ${currentProvider.toUpperCase()} CLI Authentication...</div>`;
+      try {
+        const res = await fetch(`/api/auth/login?provider=${currentProvider}`, { method: 'POST' });
+        const data = await res.json();
+        consoleBox.innerHTML += `<div class="text-slate-300 log-line">${data.output || 'Login complete.'}</div>`;
+        checkAuthStatus();
+      } catch (err) {
+        consoleBox.innerHTML += `<div class="text-rose-400 font-bold log-line">[✗] Login error: ${err.message}</div>`;
+      }
+    }
+
+    async function cancelProvisioning() {
+      const consoleBox = document.getElementById('outputConsole');
+      const statusLabel = document.getElementById('logStatus');
+      const cancelBtn = document.getElementById('btnCancelExecution');
+
+      try {
+        const res = await fetch('/api/provision/cancel', { method: 'POST' });
+        const data = await res.json();
+        
+        isExecuting = false;
+        cancelBtn.classList.add('hidden');
+        statusLabel.innerText = 'CANCELLED';
+        statusLabel.className = 'text-[9.5px] text-rose-300 bg-rose-950/80 px-2 py-0.5 rounded border border-rose-700/60 font-bold uppercase tracking-wider';
+
+        consoleBox.innerHTML += `
+          <div class="text-rose-400 font-bold border-t border-rose-500/30 pt-1.5 mt-2 log-line">
+            ⛔ [CANCELLED] Terminal execution process terminated by user.
+          </div>
+        `;
+        consoleBox.scrollTop = consoleBox.scrollHeight;
+      } catch (err) {
+        consoleBox.innerHTML += `<div class="text-rose-400 font-bold log-line">[✗] Cancel error: ${err.message}</div>`;
+      }
+    }
+
+    async function runProvision(destroy) {
+      const prefix = document.getElementById('prefix').value || 'snapthreadz';
+      const location = document.getElementById('location').value || 'westeurope';
+      const consoleBox = document.getElementById('outputConsole');
+      const statusLabel = document.getElementById('logStatus');
+      const cancelBtn = document.getElementById('btnCancelExecution');
+      const portalBox = document.getElementById('portalLinksContainer');
+      const portalList = document.getElementById('portalLinksList');
+      const progressContainer = document.getElementById('liveProgressBarContainer');
+      const progressLabel = document.getElementById('progressResourceLabel');
+      const progressPercent = document.getElementById('progressPercentLabel');
+      const progressBar = document.getElementById('progressBarFill');
+
+      isExecuting = true;
+      resourceStepCount = 0;
+      const totalExpectedResources = availableEnvs.length * 12;
+
+      portalBox.classList.add('hidden');
+      cancelBtn.classList.remove('hidden');
+      progressContainer.classList.remove('hidden');
+
+      statusLabel.innerText = destroy ? 'RUNNING (TEARDOWN)' : 'RUNNING (PROVISION)';
+      statusLabel.className = 'text-[9.5px] text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-700/60 font-bold uppercase tracking-wider animate-pulse';
+
+      progressBar.style.width = '5%';
+      progressLabel.innerText = `Initializing ${currentProvider.toUpperCase()} CLI Daemon...`;
+      progressPercent.innerText = `5%`;
+
+      consoleBox.innerHTML = `
+        <div class="text-cyan-300 font-bold log-line">[$] Executing ${currentProvider.toUpperCase()} Provisioner for prefix '${prefix}' in region '${location}'...</div>
+        <div class="text-cyan-400 log-line">[$] Target Environments: [${availableEnvs.map(e => e.toUpperCase()).join(', ')}] (${totalExpectedResources} Resources Total)</div>
+        <div class="text-slate-400 log-line">[+] Launching live daemon execution process...</div>
+      `;
+
+      try {
+        const res = await fetch('/api/provision', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ provider: currentProvider, prefix, location, destroy, environments: availableEnvs })
+        });
+        const data = await res.json();
+
+        isExecuting = false;
+        cancelBtn.classList.add('hidden');
+
+        statusLabel.innerText = data.status === 'success' ? 'SUCCESS' : 'WARNING';
+        statusLabel.className = data.status === 'success'
+          ? 'text-[9.5px] text-emerald-300 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-700/60 font-bold uppercase tracking-wider'
+          : 'text-[9.5px] text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-700/60 font-bold uppercase tracking-wider';
+
+        progressBar.style.width = '100%';
+        progressLabel.innerText = data.status === 'success' ? 'All Resources Processed Successfully!' : 'Execution Finished';
+        progressPercent.innerText = '100%';
+
+        const lines = (data.output || '').split('\n');
+        let formattedOutput = `<div class="text-emerald-400 font-bold border-b border-emerald-500/20 pb-1 mb-2 log-line">[✓] Execution Status: ${data.status.toUpperCase()} (Provider: ${currentProvider.toUpperCase()})</div>`;
+
+        lines.forEach(line => {
+          if (!line.trim()) return;
+          if (line.includes('[SUCCESS]') || line.includes('[DELETED]') || line.includes('[✓]')) {
+            formattedOutput += `<div class="text-emerald-400 font-bold log-line">${line}</div>`;
+          } else if (line.includes('[WARN]') || line.includes('[SKIP]')) {
+            formattedOutput += `<div class="text-amber-400 font-semibold log-line">${line}</div>`;
+          } else if (line.includes('[ERROR]') || line.includes('[✗]')) {
+            formattedOutput += `<div class="text-rose-400 font-bold log-line">${line}</div>`;
+          } else if (line.includes('[INFO]') || line.includes('[+]')) {
+            formattedOutput += `<div class="text-cyan-300 log-line">${line}</div>`;
+          } else {
+            formattedOutput += `<div class="text-slate-400 log-line">${line}</div>`;
+          }
+        });
+
+        consoleBox.innerHTML = formattedOutput;
+        consoleBox.scrollTop = consoleBox.scrollHeight;
+
+        if (!destroy && data.portal_links && data.portal_links.length > 0) {
+          portalList.innerHTML = '';
+          data.portal_links.forEach(item => {
+            portalList.innerHTML += `
+              <a href="${item.url}" target="_blank" class="bg-[#050c1f] border border-indigo-700/50 hover:border-cyan-400 p-1.5 rounded-lg text-center font-bold text-cyan-300 hover:text-white transition-all text-[9.5px] truncate">
+                🔗 Open ${item.env}
+              </a>
+            `;
+          });
+          portalBox.classList.remove('hidden');
+        }
+      } catch (err) {
+        isExecuting = false;
+        cancelBtn.classList.add('hidden');
+        statusLabel.innerText = 'ERROR';
+        statusLabel.className = 'text-[9.5px] text-rose-300 bg-rose-950/80 px-2 py-0.5 rounded border border-rose-700/60 font-bold uppercase tracking-wider';
+        consoleBox.innerHTML += `<div class="text-rose-400 font-bold log-line">[✗] Provisioning error: ${err.message}</div>`;
+      }
+    }
+
+    // Initialize with Azure
+    setCloudProvider('azure');
+  </script>
+</body>
+</html>

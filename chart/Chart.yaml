@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ai-cloud-cost-detective
+description: Enterprise Helm Chart for AI Cloud Cost Detective FinOps Platform
+type: application
+version: 1.0.0
+appVersion: "1.0.0"

@@ -1,0 +1,21 @@
+# Kube-Prometheus-Stack Helm Values
+grafana:
+  enabled: true
+  adminPassword: "SecureGrafanaPassword2026!"
+  service:
+    type: LoadBalancer
+    port: 3000
+
+prometheus:
+  enabled: true
+  prometheusSpec:
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    retention: 15d
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 20Gi

@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: finops-backend
+  namespace: finops
+  labels:
+    app: finops-backend
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: finops-backend
+  template:
+    metadata:
+      labels:
+        app: finops-backend
+    spec:
+      containers:
+        - name: backend
+          image: "{{ .Values.image.repository }}/backend:{{ .Values.image.backendTag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.backendPort }}
+          env:
+            - name: DATABASE_URL
+              value: {{ .Values.env.DATABASE_URL | quote }}
+            - name: JWT_SECRET
+              value: {{ .Values.env.JWT_SECRET | quote }}
+          resources:
+            {{- toYaml .Values.resources.backend | nindent 12 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: finops-frontend
+  namespace: finops
+  labels:
+    app: finops-frontend
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: finops-frontend
+  template:
+    metadata:
+      labels:
+        app: finops-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: "{{ .Values.image.repository }}/frontend:{{ .Values.image.frontendTag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.frontendPort }}
+          resources:
+            {{- toYaml .Values.resources.frontend | nindent 12 }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: finops-ui-script
+  namespace: finops
+  labels:
+    app: finops-ui-script
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: finops-ui-script
+  template:
+    metadata:
+      labels:
+        app: finops-ui-script
+    spec:
+      containers:
+        - name: ui-script
+          image: "{{ .Values.image.repository }}/ui_script:{{ .Values.image.uiScriptTag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.uiScriptPort }}
+          resources:
+            {{- toYaml .Values.resources.uiScript | nindent 12 }}

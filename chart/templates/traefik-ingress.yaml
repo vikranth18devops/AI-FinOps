@@ -1,0 +1,29 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: finops-ingressroute
+  namespace: finops
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    # Route frontend static app
+    - match: PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: finops-frontend-service
+          port: 80
+    # Route backend REST API
+    - match: PathPrefix(`/api`)
+      kind: Rule
+      services:
+        - name: finops-backend-service
+          port: 8000
+    # Route WebSocket connections
+    - match: PathPrefix(`/ws`)
+      kind: Rule
+      services:
+        - name: finops-backend-service
+          port: 8000
+  tls:
+    secretName: finops-tls-cert
