@@ -1,4 +1,4 @@
-# 01 - Prerequisites & GitHub Secrets Setup for GCP GKE
+# 01 - Prerequisites & Local Tools Installation Guide for GCP GKE
 
 <p align="left">
   <img src="https://img.shields.io/badge/Google_Cloud-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white" />
@@ -7,15 +7,109 @@
   <img src="https://img.shields.io/badge/Terraform-IaC-7B42BC?style=for-the-badge&logo=terraform&logoColor=white" />
 </p>
 
-## 📌 Prerequisites Checklist
+## 📌 Local CLI Tools Installation Guide (macOS, Linux, Windows)
 
-Before deploying the AI Cloud Cost Detective microservices stack to GCP GKE, ensure the following tools are installed and configured:
+To execute GCP provisioner scripts (`create_gcp_resources.sh`), manage GKE Kubernetes clusters, and run local microservices (`./start_local.sh`), install the following local CLI tools:
 
-1. **Google Cloud SDK (`gcloud`)**: Installed and authenticated (`gcloud auth login`).
-2. **Terraform (v1.5+)**: Installed for GCP VPC & GKE cluster provisioning.
-3. **kubectl**: Configured to interact with Kubernetes clusters (`gcloud container clusters get-credentials`).
-4. **Helm (v3.10+)**: Installed for chart deployments.
-5. **Docker**: Running locally to build `backend`, `frontend`, and `ui_script` container images.
+---
+
+### 1️⃣ Google Cloud SDK (`gcloud` CLI) & GKE Auth Plugin
+The Google Cloud SDK is required for `gcloud` commands and GCP authentication.
+
+#### 🍏 macOS (Homebrew)
+```bash
+# Install Google Cloud SDK
+brew install --cask google-cloud-sdk
+
+# Install GKE kubectl Authentication Plugin (Required for Kubernetes)
+gcloud components install gke-gcloud-auth-plugin
+```
+
+#### 🐧 Linux (Debian / Ubuntu)
+```bash
+# Add Google Cloud SDK distribution URI as a package source
+sudo apt-get update && sudo apt-get install -y apt-transport-https ca-certificates curl gnupg
+curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo gpg --dearmor -o /usr/share/keyrings/cloud.google.gpg
+echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+
+# Install SDK and GKE plugin
+sudo apt-get update && sudo apt-get install -y google-cloud-cli google-cloud-cli-gke-gcloud-auth-plugin
+```
+
+#### 🔑 Local GCP Authentication
+```bash
+# Login to Google Cloud User Account
+gcloud auth login
+
+# Login for Application Default Credentials (ADC)
+gcloud auth application-default login
+
+# Set Default GCP Project ID
+gcloud config set project <YOUR_GCP_PROJECT_ID>
+```
+
+---
+
+### 2️⃣ Kubernetes CLI (`kubectl`)
+Required to inspect pods, deployments, and services running on GKE.
+
+```bash
+# macOS
+brew install kubectl
+
+# Or via gcloud
+gcloud components install kubectl
+```
+
+---
+
+### 3️⃣ Terraform CLI (v1.5+)
+Required to execute infrastructure-as-code modules under [`terraform/gcp/`](file:///Users/aarvik/Documents/123/terraform/gcp).
+
+```bash
+# macOS
+brew tap hashicorp/tap
+brew install hashicorp/tap/terraform
+
+# Verify installation
+terraform -version
+```
+
+---
+
+### 4️⃣ Helm 3 (Package Manager for Kubernetes)
+Required to deploy application Helm charts under [`chart/`](file:///Users/aarvik/Documents/123/chart).
+
+```bash
+# macOS
+brew install helm
+
+# Verify installation
+helm version
+```
+
+---
+
+### 5️⃣ Docker Desktop
+Required for local container image builds (`Dockerfile`).
+
+```bash
+# macOS
+brew install --cask docker
+
+# Verify Docker engine is running
+docker info
+```
+
+---
+
+### 6️⃣ Python 3.11+ & Node.js 20+
+Required to launch local microservices stack via `./start_local.sh`.
+
+```bash
+# macOS
+brew install python@3.11 node@20
+```
 
 ---
 
@@ -26,7 +120,7 @@ The application stack consists of 3 microservices located in [`application/`](fi
 - ⚙️ **FastAPI Backend**: `application/backend` (Port 8080)
 - 🚀 **UI_Script Provisioner**: `application/UI_Script` (Port 8585)
 
-Local Simultaneous Launcher:
+Launch all 3 local microservices simultaneously:
 ```bash
 ./start_local.sh
 ```
@@ -47,7 +141,6 @@ Run the following command in your terminal to get your active Google Cloud Proje
 ```bash
 gcloud config get-value project
 ```
-*Copy the returned Project ID string (e.g., `my-finops-project-123456`).*
 
 ---
 
@@ -59,26 +152,26 @@ Choose your target Google Cloud region where Artifact Registry and GKE reside:
 ---
 
 ### 3️⃣ Generate `GCP_SA_KEY` (Service Account Key)
-Run the following commands in your terminal to create a dedicated Service Account with Artifact Registry & GKE permissions, and download the JSON key:
+Run the following commands in your terminal:
 
 ```bash
-# 1. Set your active GCP Project ID variable
+# 1. Set active GCP Project ID variable
 export PROJECT_ID=$(gcloud config get-value project)
 
 # 2. Enable Artifact Registry API
 gcloud services enable artifactregistry.googleapis.com container.googleapis.com
 
-# 3. Create Artifact Registry Repository (if not existing)
+# 3. Create Artifact Registry Repository
 gcloud artifacts repositories create finops-repo \
     --repository-format=docker \
     --location=us-central1 \
     --description="Docker repository for AI FinOps platform"
 
-# 4. Create a dedicated GitHub Actions Service Account
+# 4. Create dedicated GitHub Actions Service Account
 gcloud iam service-accounts create github-actions-sa \
     --display-name="GitHub Actions CI/CD Service Account"
 
-# 5. Grant Artifact Registry & Kubernetes Engine permissions
+# 5. Grant Artifact Registry Writer & Kubernetes Engine Admin roles
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:github-actions-sa@$PROJECT_ID.iam.gserviceaccount.com" \
     --role="roles/artifactregistry.writer"
@@ -87,11 +180,11 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:github-actions-sa@$PROJECT_ID.iam.gserviceaccount.com" \
     --role="roles/container.admin"
 
-# 6. Generate & download the JSON Key file
+# 6. Generate & download JSON Key file
 gcloud iam service-accounts keys create gcp-key.json \
     --iam-account=github-actions-sa@$PROJECT_ID.iam.gserviceaccount.com
 
-# 7. Print the JSON key content to copy into GitHub Secrets
+# 7. Print JSON key content to copy into GitHub Secrets
 cat gcp-key.json
 ```
 
@@ -108,7 +201,7 @@ cat gcp-key.json
 | **`GCP_REGION`** | `us-central1` (or your GCP region) |
 | **`GCP_SA_KEY`** | Full raw JSON content from `cat gcp-key.json` |
 
-4. Clean up the local key file after setting the secret:
+4. Clean up local key file for security:
 ```bash
 rm gcp-key.json
 ```

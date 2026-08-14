@@ -1,4 +1,4 @@
-# 01 - Prerequisites & GitHub Secrets Setup for AWS EKS
+# 01 - Prerequisites & Local Tools Installation Guide for AWS EKS
 
 <p align="left">
   <img src="https://img.shields.io/badge/Amazon_AWS-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" />
@@ -7,15 +7,69 @@
   <img src="https://img.shields.io/badge/Terraform-IaC-7B42BC?style=for-the-badge&logo=terraform&logoColor=white" />
 </p>
 
-## 📌 Prerequisites Checklist
+## 📌 Local CLI Tools Installation Guide (macOS, Linux, Windows)
 
-Before deploying the AI Cloud Cost Detective microservices stack to AWS EKS, ensure the following tools are installed and configured:
+To execute AWS provisioner scripts (`create_aws_resources.sh`), manage EKS Kubernetes clusters, and run local microservices (`./start_local.sh`), install the following local CLI tools:
 
-1. **AWS CLI v2**: Installed and authenticated (`aws sts get-caller-identity`).
-2. **Terraform (v1.5+)**: Installed for AWS VPC & EKS cluster provisioning.
-3. **kubectl**: Configured to interact with Kubernetes clusters.
-4. **Helm (v3.10+)**: Installed for chart deployments.
-5. **Docker**: Running locally to build `backend`, `frontend`, and `ui_script` container images.
+---
+
+### 1️⃣ AWS CLI v2
+Required for AWS resource provisioning, ECR login, and CLI authentication.
+
+#### 🍏 macOS (Homebrew)
+```bash
+brew install awscli
+```
+
+#### 🐧 Linux (Debian / Ubuntu)
+```bash
+curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
+sudo installer -pkg AWSCLIV2.pkg -target /
+```
+
+#### 🔑 Local AWS Authentication
+```bash
+# Configure AWS Access Keys
+aws configure
+```
+
+---
+
+### 2️⃣ Kubernetes CLI (`kubectl`) & `eksctl`
+Required to inspect pods and manage AWS EKS clusters.
+
+```bash
+# macOS
+brew install kubectl eksctl
+```
+
+---
+
+### 3️⃣ Terraform CLI (v1.5+)
+Required to execute infrastructure-as-code modules under [`terraform/aws/`](file:///Users/aarvik/Documents/123/terraform/aws).
+
+```bash
+brew tap hashicorp/tap
+brew install hashicorp/tap/terraform
+```
+
+---
+
+### 4️⃣ Helm 3 (Package Manager for Kubernetes)
+Required to deploy application Helm charts under [`chart/`](file:///Users/aarvik/Documents/123/chart).
+
+```bash
+brew install helm
+```
+
+---
+
+### 5️⃣ Docker Desktop
+Required for local container image builds (`Dockerfile`).
+
+```bash
+brew install --cask docker
+```
 
 ---
 
@@ -26,7 +80,7 @@ The application stack consists of 3 microservices located in [`application/`](fi
 - ⚙️ **FastAPI Backend**: `application/backend` (Port 8080)
 - 🚀 **UI_Script Provisioner**: `application/UI_Script` (Port 8585)
 
-Local Simultaneous Launcher:
+Launch all 3 local microservices simultaneously:
 ```bash
 ./start_local.sh
 ```
@@ -43,23 +97,11 @@ The AWS EKS CI/CD pipeline requires 3 GitHub Repository Secrets:
 Follow the step-by-step instructions below to generate each secret:
 
 ### 1️⃣ Obtain AWS Credentials from IAM User
-Run the following commands in your terminal or check `~/.aws/credentials`:
-
 ```bash
-# Print current AWS Access Key ID
 aws configure get aws_access_key_id
-
-# Print current AWS Secret Access Key
 aws configure get aws_secret_access_key
-
-# Print current AWS Region
 aws configure get region
 ```
-
-If creating a new IAM user for CI/CD:
-1. Open **AWS IAM Console** > **Users** > **Create User** (name: `github-actions-user`).
-2. Attach Policy: `AmazonEC2ContainerRegistryFullAccess` & `AmazonEKSClusterPolicy`.
-3. Create **Access Key** under **Security credentials** tab and copy `Access Key ID` & `Secret Access Key`.
 
 ---
 

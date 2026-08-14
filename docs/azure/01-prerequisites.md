@@ -1,4 +1,4 @@
-# 01 - Prerequisites & GitHub Secrets Setup for Azure AKS
+# 01 - Prerequisites & Local Tools Installation Guide for Azure AKS
 
 <p align="left">
   <img src="https://img.shields.io/badge/Microsoft_Azure-0089D6?style=for-the-badge&logo=microsoft-azure&logoColor=white" />
@@ -7,15 +7,74 @@
   <img src="https://img.shields.io/badge/Terraform-IaC-7B42BC?style=for-the-badge&logo=terraform&logoColor=white" />
 </p>
 
-## 📌 Prerequisites Checklist
+## 📌 Local CLI Tools Installation Guide (macOS, Linux, Windows)
 
-Before deploying the AI Cloud Cost Detective microservices stack to Azure AKS, ensure the following tools are installed and configured:
+To execute Azure provisioner scripts (`create_azure_resources.sh`), manage AKS Kubernetes clusters, and run local microservices (`./start_local.sh`), install the following local CLI tools:
 
-1. **Azure CLI (`az`)**: Installed and authenticated (`az login`).
-2. **Terraform (v1.5+)**: Installed for Azure Resource Group & AKS cluster provisioning.
-3. **kubectl**: Configured to interact with Kubernetes clusters (`az aks get-credentials`).
-4. **Helm (v3.10+)**: Installed for chart deployments.
-5. **Docker**: Running locally to build `backend`, `frontend`, and `ui_script` container images.
+---
+
+### 1️⃣ Azure CLI (`az`)
+Required for Azure resource provisioning, CLI authentication, and live cost scanning.
+
+#### 🍏 macOS (Homebrew)
+```bash
+brew install azure-cli
+```
+
+#### 🐧 Linux (Debian / Ubuntu)
+```bash
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+```
+
+#### 🔑 Local Azure Authentication
+```bash
+# Login to Azure Subscription
+az login
+
+# Set Active Subscription (if multiple exist)
+az account set --subscription <YOUR_SUBSCRIPTION_ID>
+```
+
+---
+
+### 2️⃣ Kubernetes CLI (`kubectl`)
+Required to inspect pods, deployments, and services running on AKS.
+
+```bash
+# macOS / Linux via Azure CLI
+az aks install-cli
+
+# Or via Homebrew
+brew install kubectl
+```
+
+---
+
+### 3️⃣ Terraform CLI (v1.5+)
+Required to execute infrastructure-as-code modules under [`terraform/azure/`](file:///Users/aarvik/Documents/123/terraform/azure).
+
+```bash
+brew tap hashicorp/tap
+brew install hashicorp/tap/terraform
+```
+
+---
+
+### 4️⃣ Helm 3 (Package Manager for Kubernetes)
+Required to deploy application Helm charts under [`chart/`](file:///Users/aarvik/Documents/123/chart).
+
+```bash
+brew install helm
+```
+
+---
+
+### 5️⃣ Docker Desktop
+Required for local container image builds (`Dockerfile`).
+
+```bash
+brew install --cask docker
+```
 
 ---
 
@@ -26,7 +85,7 @@ The application stack consists of 3 microservices located in [`application/`](fi
 - ⚙️ **FastAPI Backend**: `application/backend` (Port 8080)
 - 🚀 **UI_Script Provisioner**: `application/UI_Script` (Port 8585)
 
-Local Simultaneous Launcher:
+Launch all 3 local microservices simultaneously:
 ```bash
 ./start_local.sh
 ```
@@ -43,20 +102,13 @@ The Azure AKS CI/CD pipeline requires 3 GitHub Repository Secrets:
 Follow the step-by-step instructions below to generate each secret:
 
 ### 1️⃣ Create Azure Container Registry (ACR) & Enable Admin
-Run the following commands in your terminal:
 ```bash
-# Set variables
 export RG_NAME="finops-global-rg"
 export ACR_NAME="finopsacr2026$RANDOM"
 export LOCATION="westeurope"
 
-# 1. Create Resource Group
 az group create --name $RG_NAME --location $LOCATION
-
-# 2. Create Azure Container Registry
 az acr create --resource-group $RG_NAME --name $ACR_NAME --sku Basic
-
-# 3. Enable Admin user for credentials access
 az acr update --name $ACR_NAME --admin-enabled true
 ```
 
@@ -64,13 +116,8 @@ az acr update --name $ACR_NAME --admin-enabled true
 
 ### 2️⃣ Obtain ACR Credentials for GitHub Secrets
 ```bash
-# 1. Get ACR Login Server
 az acr show --name $ACR_NAME --query loginServer -o tsv
-
-# 2. Get ACR Username
 az acr credential show --name $ACR_NAME --query username -o tsv
-
-# 3. Get ACR Password
 az acr credential show --name $ACR_NAME --query passwords[0].value -o tsv
 ```
 
@@ -83,7 +130,7 @@ az acr credential show --name $ACR_NAME --query passwords[0].value -o tsv
 
 | Secret Name | Value to Paste |
 | :--- | :--- |
-| **`ACR_LOGIN_SERVER`** | Output of `az acr show --name $ACR_NAME --query loginServer -o tsv` (e.g. `finopsacr2026.azurecr.io`) |
+| **`ACR_LOGIN_SERVER`** | Output of `az acr show --name $ACR_NAME --query loginServer -o tsv` |
 | **`ACR_USERNAME`** | Output of `az acr credential show --name $ACR_NAME --query username -o tsv` |
 | **`ACR_PASSWORD`** | Output of `az acr credential show --name $ACR_NAME --query passwords[0].value -o tsv` |
 
