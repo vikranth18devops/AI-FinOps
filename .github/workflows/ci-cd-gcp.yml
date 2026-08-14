@@ -172,7 +172,7 @@ jobs:
   ################################################################################
   gitops-cd:
     name: ⛵ GitOps CD Helm Update (GCP)
-    needs: [backend-build, frontend-build, ui-script-build]
+    needs: [compile-validation, gitleaks-scan, trivy-fs-scan, backend-build, frontend-build, ui-script-build]
     runs-on: ubuntu-latest
     permissions:
       contents: write
