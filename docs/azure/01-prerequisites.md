@@ -102,23 +102,39 @@ The Azure AKS CI/CD pipeline requires 3 GitHub Repository Secrets:
 Follow the step-by-step instructions below to generate each secret:
 
 ### 1️⃣ Create Azure Container Registry (ACR) & Enable Admin
+Run the following terminal commands:
 ```bash
+# Set environment variables
 export RG_NAME="finops-global-rg"
 export ACR_NAME="finopsacr2026$RANDOM"
 export LOCATION="westeurope"
 
+# 1. Create Azure Resource Group
 az group create --name $RG_NAME --location $LOCATION
+
+# 2. Create Azure Container Registry (ACR)
 az acr create --resource-group $RG_NAME --name $ACR_NAME --sku Basic
+
+# 3. Enable Admin User for ACR credential access
 az acr update --name $ACR_NAME --admin-enabled true
 ```
 
 ---
 
 ### 2️⃣ Obtain ACR Credentials for GitHub Secrets
+Run the following commands in your terminal:
 ```bash
+# 1. Get ACR Login Server Name
 az acr show --name $ACR_NAME --query loginServer -o tsv
+# Example Output: finopsacr2026.azurecr.io
+
+# 2. Get ACR Username
 az acr credential show --name $ACR_NAME --query username -o tsv
+# Example Output: finopsacr2026
+
+# 3. Get ACR Password
 az acr credential show --name $ACR_NAME --query passwords[0].value -o tsv
+# Example Output: aB3dF6gH9jK1mN4pQ7rS0tU2vW5xY8z
 ```
 
 ---
@@ -128,11 +144,11 @@ az acr credential show --name $ACR_NAME --query passwords[0].value -o tsv
 2. Navigate to **Settings** > **Secrets and variables** > **Actions**.
 3. Click **New repository secret** and add each secret:
 
-| Secret Name | Value to Paste |
-| :--- | :--- |
-| **`ACR_LOGIN_SERVER`** | Output of `az acr show --name $ACR_NAME --query loginServer -o tsv` |
-| **`ACR_USERNAME`** | Output of `az acr credential show --name $ACR_NAME --query username -o tsv` |
-| **`ACR_PASSWORD`** | Output of `az acr credential show --name $ACR_NAME --query passwords[0].value -o tsv` |
+| Secret Name | How to Get Value | Example Output Value |
+| :--- | :--- | :--- |
+| **`ACR_LOGIN_SERVER`** | `az acr show --name $ACR_NAME --query loginServer -o tsv` | `finopsacr2026.azurecr.io` |
+| **`ACR_USERNAME`** | `az acr credential show --name $ACR_NAME --query username -o tsv` | `finopsacr2026` |
+| **`ACR_PASSWORD`** | `az acr credential show --name $ACR_NAME --query passwords[0].value -o tsv` | `aB3dF6gH9jK1mN4p...` |
 
 ---
 

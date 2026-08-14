@@ -96,25 +96,45 @@ The AWS EKS CI/CD pipeline requires 3 GitHub Repository Secrets:
 
 Follow the step-by-step instructions below to generate each secret:
 
-### 1️⃣ Obtain AWS Credentials from IAM User
+### 1️⃣ Obtain AWS Credentials from Existing CLI Profile
+Run the following terminal commands:
 ```bash
+# 1. Print AWS Access Key ID
 aws configure get aws_access_key_id
+# Example Output: AKIAIOSFODNN7EXAMPLE
+
+# 2. Print AWS Secret Access Key
 aws configure get aws_secret_access_key
+# Example Output: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+
+# 3. Print Default AWS Region
 aws configure get region
+# Example Output: us-east-1
 ```
 
 ---
 
-### 2️⃣ Adding Secrets to GitHub Repository
+### 2️⃣ Create New AWS IAM User for CI/CD Pipeline (Recommended)
+If creating a dedicated IAM user for GitHub Actions:
+1. Open **AWS IAM Console** > **Users** > **Create User** (Name: `github-actions-finops-user`).
+2. Attach IAM Policies:
+   - `AmazonEC2ContainerRegistryFullAccess`
+   - `AmazonEKSClusterPolicy`
+3. Click **Security credentials** tab > **Create access key** > Choose **CLI**.
+4. Copy the generated **Access key ID** & **Secret access key**.
+
+---
+
+### 3️⃣ Adding Secrets to GitHub Repository
 1. Open your GitHub Repository: **`https://github.com/vikranth18devops/AI-FinOps`**
 2. Navigate to **Settings** > **Secrets and variables** > **Actions**.
 3. Click **New repository secret** and add each secret:
 
-| Secret Name | Value to Paste |
-| :--- | :--- |
-| **`AWS_ACCESS_KEY_ID`** | Your AWS Access Key ID (e.g. `AKIAIOSFODNN7EXAMPLE`) |
-| **`AWS_SECRET_ACCESS_KEY`** | Your AWS Secret Access Key |
-| **`AWS_REGION`** | `us-east-1` (or your chosen AWS region) |
+| Secret Name | How to Get Value | Example Output Value |
+| :--- | :--- | :--- |
+| **`AWS_ACCESS_KEY_ID`** | IAM User Access Key | `AKIAIOSFODNN7EXAMPLE` |
+| **`AWS_SECRET_ACCESS_KEY`** | IAM User Secret Access Key | `wJalrXUtnFEMI/K7MDENG/...` |
+| **`AWS_REGION`** | AWS Target Region | `us-east-1` |
 
 ---
 
