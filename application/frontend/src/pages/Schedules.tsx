@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Clock, Bell, Plus, Play, Trash2, Pause, CheckCircle2, AlertTriangle, Layers, Mail, ShieldAlert, Sparkles, RefreshCw, Sliders } from 'lucide-react';
 import { ResourceGroup } from '../types';
+import { API_BASE_URL } from '../config';
 
 interface ScheduleItem {
   id: string;
@@ -46,7 +47,7 @@ export const SchedulesPage: React.FC<SchedulesProps> = ({ token, onRunAnalysisFo
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch('http://localhost:8080/api/schedules/send-test-alert', {
+      const res = await fetch(`${API_BASE_URL}/api/schedules/send-test-alert`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -73,7 +74,7 @@ export const SchedulesPage: React.FC<SchedulesProps> = ({ token, onRunAnalysisFo
       const headers: Record<string, string> = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch('http://localhost:8080/api/resource-groups', { headers });
+      const res = await fetch(`${API_BASE_URL}/api/resource-groups`, { headers });
       const data = await res.json();
 
       if (res.ok) {
@@ -93,7 +94,7 @@ export const SchedulesPage: React.FC<SchedulesProps> = ({ token, onRunAnalysisFo
       const headers: Record<string, string> = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch('http://localhost:8080/api/schedules', { headers });
+      const res = await fetch(`${API_BASE_URL}/api/schedules`, { headers });
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.detail || 'Failed to fetch schedules.');
@@ -127,7 +128,7 @@ export const SchedulesPage: React.FC<SchedulesProps> = ({ token, onRunAnalysisFo
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch('http://localhost:8080/api/schedules', {
+      const res = await fetch(`${API_BASE_URL}/api/schedules`, {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -156,7 +157,7 @@ export const SchedulesPage: React.FC<SchedulesProps> = ({ token, onRunAnalysisFo
       const headers: Record<string, string> = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch(`http://localhost:8080/api/schedules/${id}/toggle`, {
+      const res = await fetch(`${API_BASE_URL}/api/schedules/${id}/toggle`, {
         method: 'POST',
         headers
       });
@@ -174,7 +175,7 @@ export const SchedulesPage: React.FC<SchedulesProps> = ({ token, onRunAnalysisFo
       const headers: Record<string, string> = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch(`http://localhost:8080/api/schedules/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/schedules/${id}`, {
         method: 'DELETE',
         headers
       });

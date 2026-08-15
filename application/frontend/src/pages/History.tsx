@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { History as HistoryIcon, Calendar, ArrowRight, RefreshCw, AlertTriangle, FileText, Search, Filter, Eye, CheckCircle2, Clock, DollarSign, Terminal, ShieldCheck, TrendingUp, UserCheck, ChevronDown, Sparkles } from 'lucide-react';
 import { AnalysisRecord } from '../types';
+import { API_BASE_URL } from '../config';
 
 interface RemediationRecord {
   id: string;
@@ -50,14 +51,14 @@ export const HistoryPage: React.FC<HistoryProps> = ({ token, onSelectRecord }) =
       }
 
       // Fetch Past AI Audits
-      const res = await fetch('http://localhost:8080/api/history', { headers });
+      const res = await fetch(`${API_BASE_URL}/api/history`, { headers });
       const data = await res.json();
       if (res.ok) {
         setHistory(data.history || []);
       }
 
       // Fetch Executed Remediation Audit Log
-      const remRes = await fetch('http://localhost:8080/api/remediations', { headers });
+      const remRes = await fetch(`${API_BASE_URL}/api/remediations`, { headers });
       const remData = await remRes.json();
       if (remRes.ok) {
         setRemediations(remData.remediations || []);

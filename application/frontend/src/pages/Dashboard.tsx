@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Server, Play, RefreshCw, AlertTriangle, Sparkles, Layers, FileText, ArrowRight, DollarSign, AlertCircle, Cpu, HardDrive, Network, Database, Tag, LayoutList, LayoutGrid, FolderTree, Globe, Lock, ShieldCheck, PieChart, Users, Building2, Search, CheckCircle2, Copy, Check, ChevronDown, Activity, Zap } from 'lucide-react';
 import { ResourceGroup, ResourceItem } from '../types';
+import { API_BASE_URL } from '../config';
 import { ProgressTracker } from '../components/ProgressTracker';
 import { FinOpsAnalytics } from '../components/FinOpsAnalytics';
 import { DriftMonitor } from '../components/DriftMonitor';
@@ -52,7 +53,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const res = await fetch('http://localhost:8080/api/resource-groups', { headers });
+      const res = await fetch(`${API_BASE_URL}/api/resource-groups`, { headers });
       const data = await res.json();
 
       if (!res.ok) {
@@ -81,7 +82,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const res = await fetch(`http://localhost:8080/api/resource-groups/${encodeURIComponent(rgName)}/resources`, { headers });
+      const res = await fetch(`${API_BASE_URL}/api/resource-groups/${encodeURIComponent(rgName)}/resources`, { headers });
       const data = await res.json();
 
       if (res.ok) {
@@ -127,7 +128,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const res = await fetch('http://localhost:8080/api/analyze', {
+      const res = await fetch(`${API_BASE_URL}/api/analyze`, {
         method: 'POST',
         headers,
         body: JSON.stringify({

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ShieldCheck, ShieldAlert, PlusCircle, MinusCircle, RefreshCw, AlertTriangle, Layers, Tag, CheckCircle2, ChevronRight, Lightbulb, Copy, Check, Terminal, ChevronDown, Play } from 'lucide-react';
 import { ResourceItem } from '../types';
+import { API_BASE_URL } from '../config';
 
 interface DriftMonitorProps {
   token?: string | null;
@@ -117,7 +118,7 @@ export const DriftMonitor: React.FC<DriftMonitorProps> = ({
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch('http://localhost:8080/api/execute-fix', {
+      const res = await fetch(`${API_BASE_URL}/api/execute-fix`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ command })

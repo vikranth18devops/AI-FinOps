@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ShieldAlert, Mail, Lock, ArrowRight, Loader2, AlertCircle, Sparkles, KeyRound, UserPlus } from 'lucide-react';
 import { User } from '../types';
+import { API_BASE_URL } from '../config';
 
 interface SignupProps {
   onSignupSuccess: (user: User, token: string) => void;
@@ -36,7 +37,7 @@ export const Signup: React.FC<SignupProps> = ({ onSignupSuccess, onNavigateToLog
     setLoading(true);
 
     try {
-      const res = await fetch('http://localhost:8080/api/auth/signup', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })

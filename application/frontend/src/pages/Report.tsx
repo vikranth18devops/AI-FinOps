@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ShieldAlert, DollarSign, Copy, Check, ArrowLeft, Terminal, AlertTriangle, Layers, Lightbulb, ChevronDown, Play, Sparkles, Download, FileSpreadsheet, FileText as PdfIcon, Zap, CheckCircle2, XCircle, RefreshCw } from 'lucide-react';
 import { CostIssue, CostAnalysisDetail, ResourceItem } from '../types';
+import { API_BASE_URL } from '../config';
 import { FinOpsAnalytics } from '../components/FinOpsAnalytics';
 
 interface ReportProps {
@@ -113,7 +114,7 @@ export const Report: React.FC<ReportProps> = ({ token, analysisData, onBackToDas
       const headers: Record<string, string> = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch(`http://localhost:8080/api/resource-groups/${encodeURIComponent(resource_group)}/resources`, { headers });
+      const res = await fetch(`${API_BASE_URL}/api/resource-groups/${encodeURIComponent(resource_group)}/resources`, { headers });
       const data = await res.json();
       if (res.ok && data.resources) {
         setLiveResources(data.resources);
@@ -304,7 +305,7 @@ export const Report: React.FC<ReportProps> = ({ token, analysisData, onBackToDas
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const res = await fetch('http://localhost:8080/api/execute-fix', {
+      const res = await fetch(`${API_BASE_URL}/api/execute-fix`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ command })
@@ -393,7 +394,7 @@ export const Report: React.FC<ReportProps> = ({ token, analysisData, onBackToDas
         const headers: Record<string, string> = { 'Content-Type': 'application/json' };
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
-        const res = await fetch('http://localhost:8080/api/execute-fix', {
+        const res = await fetch(`${API_BASE_URL}/api/execute-fix`, {
           method: 'POST',
           headers,
           body: JSON.stringify({ command: cmd })

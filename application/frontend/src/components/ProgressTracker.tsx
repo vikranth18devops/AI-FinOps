@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { CheckCircle2, Loader2, Server, Search, Cpu, Database, Sparkles, AlertCircle, Radar } from 'lucide-react';
 import { ProgressMessage } from '../types';
+import { WS_BASE_URL } from '../config';
 
 interface ProgressTrackerProps {
   analysisId: string;
@@ -28,9 +29,7 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = window.location.hostname || 'localhost';
-    const wsUrl = `${wsProtocol}//${host}:8080/ws/progress/${analysisId}`;
+    const wsUrl = `${WS_BASE_URL}/ws/progress/${analysisId}`;
 
     let socket: WebSocket | null = null;
     try {

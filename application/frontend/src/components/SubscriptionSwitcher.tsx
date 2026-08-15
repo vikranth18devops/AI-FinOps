@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Globe, RefreshCw, Layers, DollarSign, CheckCircle2, ChevronDown, Sparkles, BarChart2, Server, ShieldCheck, ExternalLink } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 interface Subscription {
   id: string;
@@ -30,7 +31,7 @@ export const SubscriptionSwitcher: React.FC<SubscriptionSwitcherProps> = ({
       const headers: Record<string, string> = {};
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch('http://localhost:8080/api/subscriptions', { headers });
+      const res = await fetch(`${API_BASE_URL}/api/subscriptions`, { headers });
       const data = await res.json();
 
       if (res.ok && data.subscriptions) {
@@ -61,7 +62,7 @@ export const SubscriptionSwitcher: React.FC<SubscriptionSwitcherProps> = ({
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       if (token) headers['Authorization'] = `Bearer ${token}`;
 
-      const res = await fetch('http://localhost:8080/api/subscriptions/set-active', {
+      const res = await fetch(`${API_BASE_URL}/api/subscriptions/set-active`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ subscription_id: subId })
