@@ -24,7 +24,9 @@ kill -9 $(lsof -t -i :8585) 2>/dev/null || true
 
 PYTHON_BIN="$ROOT_DIR/application/backend/venv/bin/python"
 if [ ! -f "$PYTHON_BIN" ]; then
-    PYTHON_BIN="python3"
+    echo "Creating Python virtual environment in application/backend/venv..."
+    python3 -m venv "$ROOT_DIR/application/backend/venv"
+    "$PYTHON_BIN" -m pip install -r "$ROOT_DIR/application/backend/requirements.txt" uvicorn fastapi pydantic
 fi
 
 # 1. Start Backend Server (Port 8080)

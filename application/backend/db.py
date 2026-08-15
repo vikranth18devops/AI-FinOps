@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import asyncio
 from typing import List, Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
@@ -13,51 +14,87 @@ _db_initialized = False
 
 async def init_db():
     """
-    Initializes the database connection and creates tables:
+    Initializes the database connection and creates all required tables:
     - users
     - analyses
+    - schedules
+    - remediations
     """
     global _pg_pool, _use_sqlite, _sqlite_db_path, _db_initialized
 
     database_url = os.getenv("DATABASE_URL", "").strip()
 
     if database_url and (database_url.startswith("postgresql://") or database_url.startswith("postgres://")):
-        try:
-            import asyncpg
-            logger.info("Connecting to Azure Managed PostgreSQL...")
-            _pg_pool = await asyncpg.create_pool(database_url, min_size=1, max_size=10, command_timeout=5.0)
+        for attempt in range(1, 6):
+            try:
+                import asyncpg
+                logger.info(f"Connecting to PostgreSQL (Attempt {attempt}/5)...")
+                _pg_pool = await asyncpg.create_pool(database_url, min_size=1, max_size=10, command_timeout=10.0)
 
-            async with _pg_pool.acquire() as conn:
-                # Create users table
-                await conn.execute("""
-                    CREATE TABLE IF NOT EXISTS users (
-                        id SERIAL PRIMARY KEY,
-                        email VARCHAR(255) UNIQUE NOT NULL,
-                        password_hash TEXT NOT NULL,
-                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                    );
-                """)
+                async with _pg_pool.acquire() as conn:
+                    # Create users table
+                    await conn.execute("""
+                        CREATE TABLE IF NOT EXISTS users (
+                            id SERIAL PRIMARY KEY,
+                            email VARCHAR(255) UNIQUE NOT NULL,
+                            password_hash TEXT NOT NULL,
+                            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                        );
+                    """)
 
-                # Create analyses table
-                await conn.execute("""
-                    CREATE TABLE IF NOT EXISTS analyses (
-                        id VARCHAR(100) PRIMARY KEY,
-                        user_id INT REFERENCES users(id) ON DELETE SET NULL,
-                        resource_group VARCHAR(255) NOT NULL,
-                        resources_scanned INT NOT NULL DEFAULT 0,
-                        issues_found INT NOT NULL DEFAULT 0,
-                        estimated_savings TEXT DEFAULT '$0.00/month',
-                        analysis_result JSONB NOT NULL,
-                        status VARCHAR(50) DEFAULT 'completed',
-                        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-                    );
-                """)
-            logger.info("Successfully connected to Azure Managed PostgreSQL and initialized schema.")
-            _use_sqlite = False
-            _db_initialized = True
-            return
-        except Exception as e:
-            logger.warning(f"Could not connect to PostgreSQL ({e}). Falling back to local database.")
+                    # Create analyses table
+                    await conn.execute("""
+                        CREATE TABLE IF NOT EXISTS analyses (
+                            id VARCHAR(100) PRIMARY KEY,
+                            user_id INT REFERENCES users(id) ON DELETE SET NULL,
+                            resource_group VARCHAR(255) NOT NULL,
+                            resources_scanned INT NOT NULL DEFAULT 0,
+                            issues_found INT NOT NULL DEFAULT 0,
+                            estimated_savings TEXT DEFAULT '$0.00/month',
+                            analysis_result JSONB NOT NULL,
+                            status VARCHAR(50) DEFAULT 'completed',
+                            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                        );
+                    """)
+
+                    # Create schedules table
+                    await conn.execute("""
+                        CREATE TABLE IF NOT EXISTS schedules (
+                            id VARCHAR(100) PRIMARY KEY,
+                            user_id INT REFERENCES users(id) ON DELETE CASCADE,
+                            resource_group VARCHAR(255) NOT NULL,
+                            frequency VARCHAR(50) DEFAULT 'daily',
+                            alert_email VARCHAR(255) NOT NULL,
+                            status VARCHAR(50) DEFAULT 'active',
+                            last_run TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                            next_run TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                        );
+                    """)
+
+                    # Create remediations table
+                    await conn.execute("""
+                        CREATE TABLE IF NOT EXISTS remediations (
+                            id VARCHAR(100) PRIMARY KEY,
+                            user_id INT REFERENCES users(id) ON DELETE SET NULL,
+                            user_email VARCHAR(255),
+                            resource_group VARCHAR(255) NOT NULL,
+                            command TEXT NOT NULL,
+                            status VARCHAR(50) DEFAULT 'SUCCESS',
+                            estimated_savings VARCHAR(100) DEFAULT '$120.00/month',
+                            output TEXT,
+                            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                        );
+                    """)
+
+                logger.info("Successfully connected to Azure Managed PostgreSQL and initialized schema.")
+                _use_sqlite = False
+                _db_initialized = True
+                return
+            except Exception as e:
+                logger.warning(f"PostgreSQL connection attempt {attempt}/5 failed ({e}). Retrying in 2 seconds...")
+                if attempt < 5:
+                    await asyncio.sleep(2)
 
     # Fallback to local SQLite database for development/testing
     _use_sqlite = True
