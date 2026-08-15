@@ -14,7 +14,7 @@ Deploy an in-cluster PostgreSQL StatefulSet with a `10Gi` PersistentVolumeClaim 
 
 ```bash
 # Apply PostgreSQL StatefulSet & Service manifests
-kubectl apply -f chart/templates/postgres-statefulset.yaml -n finops
+helm template finops chart/ --show-only templates/postgres-statefulset.yaml | kubectl apply -f -
 
 # Verify PostgreSQL Pod & PVC state
 kubectl get pods,pvc -n finops -l app=postgres

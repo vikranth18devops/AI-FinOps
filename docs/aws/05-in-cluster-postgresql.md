@@ -8,7 +8,7 @@ Deploy the in-cluster **PostgreSQL database** (`postgres:15-alpine`) as a **Stat
 ## ⚡ Deployment Commands
 
 ```bash
-kubectl apply -f chart/templates/postgres-statefulset.yaml -n finops
+helm template finops chart/ --show-only templates/postgres-statefulset.yaml | kubectl apply -f -
 ```
 
 ---
