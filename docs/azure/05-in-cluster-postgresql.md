@@ -56,12 +56,41 @@ kubectl get svc postgres-service -n finops
 
 ---
 
-## 📌 In-Cluster DNS Connection
-- **DNS Hostname**: `postgres-service.finops.svc.cluster.local`
+## 📌 In-Cluster DNS Connection & Connectivity Testing
+
+### 1. In-Cluster DNS Configuration Details
+- **CoreDNS Hostname**: `postgres-service.finops.svc.cluster.local`
 - **Port**: `5432`
-- **Database**: `cloud_cost_db`
-- **Connection String**:  
+- **Database Name**: `cloud_cost_db`
+- **Default Credentials**: `finopsadmin` / `SecretPass123!`
+- **Full Connection String**:  
   `postgresql://finopsadmin:SecretPass123!@postgres-service.finops.svc.cluster.local:5432/cloud_cost_db`
+
+---
+
+### ⚡ Step-by-Step Connection Verification
+
+#### Step A: Test Database Access via `kubectl exec`
+Connect directly to the running `postgres-0` pod shell and verify database tables:
+```bash
+kubectl exec -it postgres-0 -n finops -- psql -U finopsadmin -d cloud_cost_db -c "\dt"
+```
+> Expected Output: `Did not find any relations.` (or list of initial tables)
+
+#### Step B: Test In-Cluster CoreDNS Resolution
+Verify that Kubernetes CoreDNS resolves `postgres-service.finops.svc.cluster.local`:
+```bash
+kubectl run dns-test --rm -i --tty --image=busybox -n finops -- nslookup postgres-service.finops.svc.cluster.local
+```
+> Expected Output: Resolves to ClusterIP (e.g. `10.1.185.16`).
+
+#### Step C: Test Remote Connection from a Client Pod (Simulating Backend)
+Simulate how the `finops-backend` pod connects across the cluster network:
+```bash
+kubectl run pg-client-test --rm -i --tty --image=postgres:15-alpine -n finops -- \
+  psql -h postgres-service.finops.svc.cluster.local -U finopsadmin -d cloud_cost_db -c "SELECT version();"
+```
+> Expected Output: `PostgreSQL 15.x on x86_64-pc-linux-musl...`
 
 ---
 
