@@ -3,9 +3,9 @@ replicaCount: 3
 image:
   repository: myregistry.azurecr.io/finops
   pullPolicy: IfNotPresent
-  frontendTag: "f0a113b716f732473a2b361906e5307ee5f508c2"
-  backendTag: "f0a113b716f732473a2b361906e5307ee5f508c2"
-  uiScriptTag: "f0a113b716f732473a2b361906e5307ee5f508c2"
+  frontendTag: "f3d9568883b09e5cf336682a34884cd6566ac0ff"
+  backendTag: "f3d9568883b09e5cf336682a34884cd6566ac0ff"
+  uiScriptTag: "f3d9568883b09e5cf336682a34884cd6566ac0ff"
 
 service:
   frontendPort: 80
