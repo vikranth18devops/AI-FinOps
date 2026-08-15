@@ -10,7 +10,7 @@ image:
 service:
   frontendPort: 80
   backendPort: 8000
-  uiScriptPort: 8500
+  uiScriptPort: 8585
 
 # In-Cluster Kubernetes PostgreSQL StatefulSet Configuration
 postgres:

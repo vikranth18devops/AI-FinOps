@@ -99,6 +99,7 @@ REGIONS_MATRIX = {
 
 
 @app.get("/", response_class=HTMLResponse)
+@app.get("/studio", response_class=HTMLResponse)
 async def get_ui():
     """Serves the main Web UI Site index.html."""
     html_path = os.path.join(BASE_DIR, "index.html")
