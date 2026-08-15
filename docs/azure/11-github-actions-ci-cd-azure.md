@@ -1,4 +1,4 @@
-# 10 - GitHub Actions CI/CD Pipeline for Azure AKS
+# 11 - GitHub Actions CI/CD Pipeline for Azure AKS
 
 The dedicated Azure AKS CI/CD pipeline is defined in [`.github/workflows/ci-cd-azure.yml`](file:///Users/aarvik/Documents/123/.github/workflows/ci-cd-azure.yml):
 
@@ -8,4 +8,4 @@ The dedicated Azure AKS CI/CD pipeline is defined in [`.github/workflows/ci-cd-a
 
 ---
 
-Next Step: **[11-One-Click Azure Deployment](11-one-click-azure-deploy.md)**
+Next Step: **[12-One-Click Azure Deployment](12-one-click-azure-deploy.md)**

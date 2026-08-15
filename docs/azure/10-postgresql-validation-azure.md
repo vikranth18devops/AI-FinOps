@@ -1,4 +1,4 @@
-# 09 - In-Cluster PostgreSQL StatefulSet Validation Guide (Azure AKS)
+# 10 - In-Cluster PostgreSQL StatefulSet Validation Guide (Azure AKS)
 
 ## 📌 Step Overview
 This step covers validating database connectivity, schema creation, persistent volume storage integrity, and live record querying for the in-cluster **PostgreSQL StatefulSet** (`postgres-0`) running on **Azure AKS**.
@@ -76,4 +76,4 @@ asyncio.run(test_db())
 
 ---
 
-Next Step: **[10-GitHub Actions CI/CD Pipeline Setup](10-github-actions-ci-cd-azure.md)**
+Next Step: **[11-GitHub Actions CI/CD Pipeline Setup](11-github-actions-ci-cd-azure.md)**

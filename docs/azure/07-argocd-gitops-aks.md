@@ -204,4 +204,4 @@ postgres-0                          1/1     Running   0          5m
 
 ---
 
-Next Step: **[08-Observability Stack on AKS](08-observability-azure.md)**
+Next Step: **[08-Custom Domain & GoDaddy DNS Integration](08-godaddy-dns-azure.md)**
