@@ -84,14 +84,14 @@ kubectl exec -it postgres-0 -n finops -- psql -U finopsadmin -d cloud_cost_db -c
 #### Step B: Test In-Cluster CoreDNS Resolution
 Verify that Kubernetes CoreDNS resolves `postgres-service.finops.svc.cluster.local`:
 ```bash
-kubectl run dns-test --rm -i --tty --image=busybox -n finops -- nslookup postgres-service.finops.svc.cluster.local
+kubectl run dns-test -i --rm --restart=Never --image=postgres:15-alpine -n finops -- nslookup postgres-service.finops.svc.cluster.local
 ```
-> Expected Output: Resolves to ClusterIP (e.g. `10.1.185.16`).
+> Expected Output: Resolves to ClusterIP (e.g. `Server: 10.1.0.10 Address: 10.1.20.113`).
 
 #### Step C: Test Remote Connection from a Client Pod (Simulating Backend)
 Simulate how the `finops-backend` pod connects across the cluster network:
 ```bash
-kubectl run pg-client-test --rm -i --tty --image=postgres:15-alpine -n finops -- \
+kubectl run pg-client-test -i --rm --restart=Never --image=postgres:15-alpine -n finops -- \
   psql -h postgres-service.finops.svc.cluster.local -U finopsadmin -d cloud_cost_db -c "SELECT version();"
 ```
 > Expected Output: `PostgreSQL 15.x on x86_64-pc-linux-musl...`
