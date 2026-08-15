@@ -1,7 +1,7 @@
-replicaCount: 3
+replicaCount: 1
 
 image:
-  repository: myregistry.azurecr.io/finops
+  repository: ghcr.io/vikranth18devops
   pullPolicy: IfNotPresent
   frontendTag: "a52cab46f05661d8ca4980b896581d7b20dce23e"
   backendTag: "a52cab46f05661d8ca4980b896581d7b20dce23e"
@@ -26,30 +26,30 @@ resources:
       cpu: 250m
       memory: 256Mi
     requests:
-      cpu: 100m
-      memory: 128Mi
+      cpu: 50m
+      memory: 64Mi
   backend:
     limits:
-      cpu: 1000m
-      memory: 1Gi
-    requests:
       cpu: 500m
       memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
   uiScript:
     limits:
       cpu: 500m
       memory: 512Mi
     requests:
-      cpu: 250m
-      memory: 256Mi
+      cpu: 100m
+      memory: 128Mi
 
 # HorizontalPodAutoscaler (HPA v2) Configuration
 autoscaling:
-  enabled: true
-  minReplicas: 2
-  maxReplicas: 10
-  targetCPUUtilizationPercentage: 60
-  targetMemoryUtilizationPercentage: 75
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 75
+  targetMemoryUtilizationPercentage: 80
 
 env:
   # In-cluster Kubernetes PostgreSQL connection string
