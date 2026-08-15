@@ -90,6 +90,11 @@ kubectl run dns-test -i --rm --restart=Never --image=postgres:15-alpine -n finop
 
 #### Step C: Test Remote Connection from a Client Pod (Simulating Backend)
 Simulate how the `finops-backend` pod connects across the cluster network:
+
+> [!IMPORTANT]
+> **Mandatory `--` Separator**:
+> Do NOT omit the `--` double-hyphen separator! In `kubectl run`, `--` separates `kubectl` parameters from the container command (`psql`). Omitting `--` will cause a `kubectl` error (`unknown shorthand flag: 'U' in -U`).
+
 ```bash
 kubectl run pg-client-test -i --rm --restart=Never --image=postgres:15-alpine -n finops \
   --env="PGPASSWORD=SecretPass123!" -- \
