@@ -316,3 +316,152 @@ In your GUI connection settings:
 | Database | `cloud_cost_db` |
 | Username | `finopsadmin` |
 | Password | `SecretPass123!` |
+
+---
+
+## ⚡ Advanced Database Validation & Diagnostic Script Suite
+
+The scripts below provide deep-dive queries for security audits, cost leak analytics, database performance, table bloat, and automated database backup/restore operations.
+
+---
+
+### 1. 🔒 Security & User Identity Audit Scripts
+
+```bash
+# ─── Accounts created in the last 24 hours ──────────────────────
+kubectl exec -n finops postgres-0 -- \
+  psql -U finopsadmin -d cloud_cost_db \
+  -c "SELECT id, email, created_at 
+      FROM users 
+      WHERE created_at >= NOW() - INTERVAL '24 hours' 
+      ORDER BY created_at DESC;"
+
+# ─── Check for missing or blank passwords ────────────────────────
+kubectl exec -n finops postgres-0 -- \
+  psql -U finopsadmin -d cloud_cost_db \
+  -c "SELECT id, email FROM users WHERE password_hash IS NULL OR password_hash = '';"
+
+# ─── User signup timeline breakdown ──────────────────────────────
+kubectl exec -n finops postgres-0 -- \
+  psql -U finopsadmin -d cloud_cost_db \
+  -c "SELECT DATE(created_at) AS signup_date, COUNT(*) AS new_users 
+      FROM users 
+      GROUP BY DATE(created_at) 
+      ORDER BY signup_date DESC;"
+```
+
+---
+
+### 2. 💰 Financial & Cost Leak Analytics Scripts
+
+```bash
+# ─── Total dollar savings realized from executed fixes ──────────
+kubectl exec -n finops postgres-0 -- \
+  psql -U finopsadmin -d cloud_cost_db \
+  -c "SELECT status, COUNT(*) AS total_fixes, 
+             SUM(CAST(REPLACE(REPLACE(estimated_savings, '$', ''), '/month', '') AS NUMERIC)) AS total_monthly_savings 
+      FROM remediations 
+      GROUP BY status;"
+
+# ─── Top 5 Resource Groups by scans performed ────────────────────
+kubectl exec -n finops postgres-0 -- \
+  psql -U finopsadmin -d cloud_cost_db \
+  -c "SELECT resource_group, COUNT(*) AS total_scans, SUM(issues_found) AS total_issues_found 
+      FROM analyses 
+      GROUP BY resource_group 
+      ORDER BY total_scans DESC LIMIT 5;"
+
+# ─── Extract cost issues JSON payload from latest analysis ───────
+kubectl exec -n finops postgres-0 -- \
+  psql -U finopsadmin -d cloud_cost_db \
+  -c "SELECT id, resource_group, 
+             analysis_result->'analysis'->'summary' AS summary,
+             analysis_result->'analysis'->'total_estimated_monthly_savings' AS estimated_savings 
+      FROM analyses 
+      ORDER BY created_at DESC LIMIT 1;"
+
+# ─── Unpack individual cost leak issues inside JSONB ─────────────
+kubectl exec -n finops postgres-0 -- \
+  psql -U finopsadmin -d cloud_cost_db \
+  -c "SELECT a.resource_group, 
+             issue->>'title' AS title, 
+             issue->>'severity' AS severity, 
+             issue->>'estimated_savings' AS savings 
+      FROM analyses a, 
+           jsonb_array_elements(a.analysis_result->'analysis'->'issues') AS issue 
+      ORDER BY a.created_at DESC LIMIT 10;"
+```
+
+---
+
+### 3. 📅 Automation & Audit Trail Diagnostics
+
+```bash
+# ─── Check overdue scanning schedules ────────────────────────────
+kubectl exec -n finops postgres-0 -- \
+  psql -U finopsadmin -d cloud_cost_db \
+  -c "SELECT id, resource_group, frequency, alert_email, next_run 
+      FROM schedules 
+      WHERE status = 'active' AND next_run <= NOW();"
+
+# ─── Remediation executions audit log by user ─────────────────────
+kubectl exec -n finops postgres-0 -- \
+  psql -U finopsadmin -d cloud_cost_db \
+  -c "SELECT user_email, COUNT(*) AS actions_taken, 
+             STRING_AGG(DISTINCT status, ', ') AS execution_statuses 
+      FROM remediations 
+      GROUP BY user_email;"
+```
+
+---
+
+### 4. ⚡ Database Health, Performance & Lock Inspection
+
+```bash
+# ─── Active client connections & queries ─────────────────────────
+kubectl exec -n finops postgres-0 -- \
+  psql -U finopsadmin -d cloud_cost_db \
+  -c "SELECT pid, usename, client_addr, state, query_start, query 
+      FROM pg_stat_activity 
+      WHERE datname = 'cloud_cost_db' AND state != 'idle';"
+
+# ─── Database size on Azure Managed Disk ──────────────────────────
+kubectl exec -n finops postgres-0 -- \
+  psql -U finopsadmin -d cloud_cost_db \
+  -c "SELECT pg_size_pretty(pg_database_size('cloud_cost_db')) AS database_size;"
+
+# ─── Individual table disk space usage ────────────────────────────
+kubectl exec -n finops postgres-0 -- \
+  psql -U finopsadmin -d cloud_cost_db \
+  -c "SELECT relname AS table_name, 
+             pg_size_pretty(pg_total_relation_size(relid)) AS total_size,
+             pg_size_pretty(pg_relation_size(relid)) AS table_size,
+             pg_size_pretty(pg_indexes_size(relid)) AS index_size
+      FROM pg_catalog.pg_statio_user_tables 
+      ORDER BY pg_total_relation_size(relid) DESC;"
+
+# ─── Check dead tuples & vacuum statistics ───────────────────────
+kubectl exec -n finops postgres-0 -- \
+  psql -U finopsadmin -d cloud_cost_db \
+  -c "SELECT relname AS table_name, n_live_tup, n_dead_tup, last_vacuum, last_autovacuum 
+      FROM pg_stat_user_tables;"
+```
+
+---
+
+### 5. 💾 Database Backup & Restore Automation Scripts
+
+```bash
+# ─── Export full database backup (pg_dump to local file) ─────────
+kubectl exec -n finops postgres-0 -- \
+  pg_dump -U finopsadmin -d cloud_cost_db -F c > ./cloud_cost_db_backup.dump
+
+# ─── Export plaintext SQL schema + data ───────────────────────────
+kubectl exec -n finops postgres-0 -- \
+  pg_dump -U finopsadmin -d cloud_cost_db --clean --if-exists > ./cloud_cost_db_schema.sql
+
+# ─── Restore database from local dump file ────────────────────────
+kubectl exec -i -n finops postgres-0 -- \
+  pg_restore -U finopsadmin -d cloud_cost_db --clean < ./cloud_cost_db_backup.dump
+```
+
