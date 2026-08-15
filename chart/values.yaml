@@ -3,9 +3,9 @@ replicaCount: 1
 image:
   repository: ghcr.io/vikranth18devops
   pullPolicy: IfNotPresent
-  frontendTag: "a52cab46f05661d8ca4980b896581d7b20dce23e"
-  backendTag: "a52cab46f05661d8ca4980b896581d7b20dce23e"
-  uiScriptTag: "a52cab46f05661d8ca4980b896581d7b20dce23e"
+  frontendTag: "55e1517f5431efe820685e5b8f70f72f874591d2"
+  backendTag: "55e1517f5431efe820685e5b8f70f72f874591d2"
+  uiScriptTag: "55e1517f5431efe820685e5b8f70f72f874591d2"
 
 service:
   frontendPort: 80
