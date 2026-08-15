@@ -6,13 +6,20 @@
 </p>
 
 ## 📌 Step Overview
-Deploy the 3 application microservices (**React Frontend**, **FastAPI Backend**, and **UI_Script Provisioner Studio**) to Azure AKS with **HorizontalPodAutoscaler (HPA v2)** using Helm.
+Deploy the 3 application microservices (**React Frontend**, **FastAPI Backend**, and **UI_Script Provisioner Studio**) and **In-Cluster PostgreSQL** to Azure AKS with **HorizontalPodAutoscaler (HPA v2)** using Helm.
+
+> [!NOTE]
+> The Helm chart uses universal Kubernetes `networking.k8s.io/v1` `Ingress` with `ingressClassName: traefik`, ensuring 100% compatibility across any Azure subscription, resource group, or region without requiring pre-installed Traefik CRDs!
 
 ---
 
 ## ⚡ Deployment Commands
 
 ```bash
+# 1. (Optional) Cleanup manual PostgreSQL resources if created standalone in step 05
+kubectl delete secret postgres-secret service postgres-service statefulset postgres -n finops --ignore-not-found
+
+# 2. Deploy full FinOps Application Stack with HPA Autoscaling
 helm upgrade --install finops ./chart \
   --namespace finops \
   --create-namespace \
@@ -33,6 +40,9 @@ kubectl get pods -n finops
 
 # 2. Verify HorizontalPodAutoscalers (HPA)
 kubectl get hpa -n finops
+
+# 3. Verify Ingress Routing
+kubectl get ingress -n finops
 ```
 
 > Expected HPA Output:

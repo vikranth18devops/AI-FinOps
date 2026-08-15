@@ -6,30 +6,40 @@
 </p>
 
 ## 📌 Step Overview
-Deploy the 3 application microservices (**React Frontend**, **FastAPI Backend**, and **UI_Script Provisioner Studio**) to GKE using Helm.
+Deploy the 3 application microservices (**React Frontend**, **FastAPI Backend**, and **UI_Script Provisioner Studio**) and **In-Cluster PostgreSQL** to GKE with **HorizontalPodAutoscaler (HPA v2)** using Helm.
 
 ---
 
 ## ⚡ Deployment Commands
 
 ```bash
+# 1. (Optional) Cleanup manual PostgreSQL resources if created standalone in step 05
+kubectl delete secret postgres-secret service postgres-service statefulset postgres -n finops --ignore-not-found
+
+# 2. Deploy FinOps Application Stack
 helm upgrade --install finops ./chart \
   --namespace finops \
   --create-namespace \
-  --set image.repository=us-central1-docker.pkg.dev/my-gcp-project/finops-repo \
-  --set service.uiScriptPort=8585 \
+  --set autoscaling.enabled=true \
+  --set autoscaling.minReplicas=2 \
+  --set autoscaling.maxReplicas=10 \
+  --set autoscaling.targetCPUUtilizationPercentage=60 \
   --wait
 ```
 
 ---
 
-## 🔍 Pod Verification
+## 🔍 Pod & Ingress Verification
 
 ```bash
+# 1. Verify Pods
 kubectl get pods -n finops
+
+# 2. Verify Ingress Routing
+kubectl get ingress -n finops
 ```
 
-Verify `finops-backend`, `finops-frontend`, and `finops-ui-script` pods are in `Running` state.
+Verify `finops-backend`, `finops-frontend`, `finops-ui-script`, and `postgres-0` pods are in `Running` state.
 
 ---
 
