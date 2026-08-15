@@ -70,7 +70,7 @@ terraform {
   required_version = ">= 1.5.0"
   backend "azurerm" {
     resource_group_name  = "finops-global-rg"
-    storage_account_name = "tfstatefinops29110"
+    storage_account_name = "tfstatefinops7261"
     container_name       = "tfstate"
     key                  = "azure.aks.tfstate"
   }

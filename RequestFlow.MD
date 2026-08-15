@@ -1,17 +1,19 @@
-## AI Cloud Cost Detective - Request Flow
+# 🔄 AI Cloud Cost Detective - End-to-End Request Flow
 
-```
-①  User ─·─·─► React ─·─·─► FastAPI Auth ─·─·─► JWT (Azure PostgreSQL)
+```text
+①  User ─·─·─► React Dashboard (https://vikranthsunkarpally.in) ─·─·─► FastAPI Auth ─·─·─► JWT (In-Cluster PostgreSQL)
 
-②  User selects Resource Group ─·─·─► Python Backend
+②  User selects Cloud Provider & Resource Group/VPC ─·─·─► Python Backend (/api/analyze)
 
-③  Python ─·─·─► Azure CLI ─·─·─► Fetches all resources in RG
+③  Python Backend ─·─·─► Azure CLI / AWS CLI / GCP CLI ─·─·─► Asynchronously scans live cloud resources
 
-④  Python ─·─·─► FastAPI WebSocket ─·─·─► React (live progress)
+④  Python Backend ─·─·─► FastAPI WebSocket (ws://.../ws/progress) ─·─·─► React UI (live progress bar)
 
-⑤  Python ─·─·─► OpenAI API ─·─·─► Cost analysis
+⑤  Python Backend ─·─·─► OpenAI API (GPT-4o) / Heuristic Engine ─·─·─► Generates cost breakdown & 1-click CLI fixes
 
-⑥  Python ─·─·─► Azure PostgreSQL ─·─·─► Stores analysis history
+⑥  User clicks "Run Fix Command" ─·─·─► Python Backend (/api/execute-fix) ─·─·─► Executes CLI remediation live on Azure/AWS/GCP
 
-⑦  React ◄·─·─·─ Final report with suggestions & fixes
+⑦  Python Backend ─·─·─► In-Cluster PostgreSQL StatefulSet ─·─·─► Saves remediation audit record ($ Saved to Date)
+
+⑧  React UI ◄·─·─·─ Updates cumulative savings card, paginated history (15 items), and exports PDF report
 ```

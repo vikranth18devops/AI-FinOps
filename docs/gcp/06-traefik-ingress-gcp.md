@@ -1,16 +1,7 @@
-# 06 - Traefik Ingress Controller on GKE
+# 06 - Deploy Traefik Ingress Controller on GCP GKE
 
-<p align="left">
-  <img src="https://img.shields.io/badge/Traefik-Ingress_Controller-24A1DE?style=for-the-badge&logo=traefik&logoColor=white" />
-  <img src="https://img.shields.io/badge/Networking-HTTP_Routing-00E676?style=for-the-badge&logo=nginx&logoColor=white" />
-</p>
-
-## 📌 Ingress Architecture
-
-Traefik routes traffic to all three application microservices in the `finops` namespace:
-- 📱 `http://<INGRESS-IP>/` -> `finops-frontend-service:80` (Port 3000 local)
-- ⚙️ `http://<INGRESS-IP>/api` -> `finops-backend-service:8000` (Port 8080 local)
-- 🚀 `http://<INGRESS-IP>/studio` -> `finops-ui-script-service:8500` (Port 8585 local)
+## 📌 Step Overview
+In this step, you will deploy **Traefik Ingress Controller** via Helm to manage HTTP (Port 80) and HTTPS (Port 443) ingress traffic. Deploying Traefik provisions a GCP External Regional TCP/UDP Load Balancer public IP address.
 
 ---
 
@@ -21,7 +12,7 @@ Traefik routes traffic to all three application microservices in the `finops` na
 helm repo add traefik https://traefik.github.io/charts --force-update
 helm repo update
 
-# 2. Deploy Traefik Ingress Controller in namespace ingress-traefik
+# 2. Deploy Traefik in namespace ingress-traefik
 helm upgrade --install traefik traefik/traefik \
   --namespace ingress-traefik --create-namespace \
   --wait
@@ -29,12 +20,20 @@ helm upgrade --install traefik traefik/traefik \
 
 ---
 
-## 🔍 Fetch GCP External LoadBalancer Public IP
+## 🔍 Fetch GCP LoadBalancer Public IP
+
+Execute `kubectl get svc` to retrieve your public IP assigned by Google Cloud:
 
 ```bash
 kubectl get svc -n ingress-traefik traefik
 ```
 
+Expected Output:
+```
+NAME      TYPE           CLUSTER-IP     EXTERNAL-IP     PORT(S)                      AGE
+traefik   LoadBalancer   10.96.150.20   35.224.38.103   80:32014/TCP,443:31980/TCP   2m
+```
+
 ---
 
-Next Step: **[07-Helm Application Deployment on GKE](07-helm-app-deployment-gcp.md)**
+Next Step: **[07-ArgoCD GitOps Continuous Deployment](07-argocd-gitops-gke.md)**

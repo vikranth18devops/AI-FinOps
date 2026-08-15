@@ -14,8 +14,17 @@ kubectl create namespace finops --dry-run=client -o yaml | kubectl apply -f -
 # Create monitoring & log aggregation namespace
 kubectl create namespace observability --dry-run=client -o yaml | kubectl apply -f -
 
+# Create logging namespace
+kubectl create namespace logging --dry-run=client -o yaml | kubectl apply -f -
+
 # Create ingress controller namespace
 kubectl create namespace ingress-traefik --dry-run=client -o yaml | kubectl apply -f -
+
+# Create ArgoCD GitOps namespace
+kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
+
+# Create cert-manager TLS controller namespace
+kubectl create namespace cert-manager --dry-run=client -o yaml | kubectl apply -f -
 ```
 
 ---

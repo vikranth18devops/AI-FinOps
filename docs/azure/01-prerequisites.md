@@ -31,10 +31,9 @@ curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
 # Login to Azure Subscription
 az login
 
-# Set Active Subscription (if multiple exist)
-az account set --subscription <YOUR_SUBSCRIPTION_ID>
+# Set Active Subscription
+az account set --subscription "afa17bb6-6630-4872-8141-2a62d46e3053"
 ```
-az account set --subscription afa17bb6-6630-4872-8141-2a62d46e3053
 ---
 
 ### 2️⃣ Kubernetes CLI (`kubectl`)

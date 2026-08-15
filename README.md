@@ -1,136 +1,102 @@
-# AI Cloud Cost Detective
+# 🚀 AI-Powered Multi-Cloud FinOps & Infrastructure Optimization Platform
 
-An AI-powered tool that investigates Azure cloud costs automatically. It scans resources in an Azure Resource Group, detects cost issues like over-provisioning and misconfigurations, and provides actionable suggestions with fixes.
+<p align="center">
+  <img src="https://img.shields.io/badge/Microsoft_Azure-AKS-0089D6?style=for-the-badge&logo=microsoft-azure&logoColor=white" />
+  <img src="https://img.shields.io/badge/Amazon_AWS-EKS-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" />
+  <img src="https://img.shields.io/badge/Google_Cloud-GKE-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white" />
+  <img src="https://img.shields.io/badge/ArgoCD-GitOps-EF6B48?style=for-the-badge&logo=argo&logoColor=white" />
+  <img src="https://img.shields.io/badge/Terraform-IaC-7B42BC?style=for-the-badge&logo=terraform&logoColor=white" />
+  <img src="https://img.shields.io/badge/HTTPS-Let's_Encrypt-003A70?style=for-the-badge&logo=letsencrypt&logoColor=white" />
+</p>
 
-## Tech Stack
+An enterprise-grade, multi-cloud FinOps and Cloud Cost Intelligence platform. It scans cloud infrastructure across **Azure**, **AWS**, and **GCP**, detects over-provisioned resources, calculates estimated dollar savings, and automates remediation via custom UI scripts, ArgoCD GitOps continuous delivery, and full observability tooling.
 
-| Layer | Technology |
-|---|---|
-| Frontend | React (Vite + TypeScript + Tailwind) |
-| Backend | Python (FastAPI) |
-| Auth | Custom JWT Auth (bcrypt + PyJWT) |
-| Cloud Data | Azure CLI |
-| Cloud | Azure |
-| AI Analysis | OpenAI API |
-| Database | Azure Managed PostgreSQL |
-| Live Updates | FastAPI WebSocket |
+---
 
-## Architecture
+## 🌐 Custom Domain & Single-Point Routing Architecture
 
-```
-                              ┌──────────────┐
-                              │     USER     │
-                              └──────┬───────┘
+The entire platform is exposed over **HTTPS** on custom domain **`vikranthsunkarpally.in`** via **Traefik v3 Ingress** and **cert-manager** (Let's Encrypt production TLS certificates):
+
+- 📱 **React Dashboard UI**: [`https://vikranthsunkarpally.in/`](https://vikranthsunkarpally.in/)
+- ⚙️ **FastAPI Backend API**: [`https://vikranthsunkarpally.in/api/`](https://vikranthsunkarpally.in/api/)
+- 🚀 **UI_Script Provisioner**: [`https://vikranthsunkarpally.in/studio`](https://vikranthsunkarpally.in/studio)
+- 🔄 **ArgoCD GitOps Controller**: [`https://vikranthsunkarpally.in/argocd/`](https://vikranthsunkarpally.in/argocd/)
+- 📊 **Grafana Observability**: [`https://vikranthsunkarpally.in/grafana/`](https://vikranthsunkarpally.in/grafana/)
+- 📈 **Prometheus Explorer**: [`https://vikranthsunkarpally.in/prometheus/`](https://vikranthsunkarpally.in/prometheus/)
+- 🚨 **Alertmanager UI**: [`https://vikranthsunkarpally.in/alertmanager/`](https://vikranthsunkarpally.in/alertmanager/)
+
+---
+
+## 🏗️ 3-Tier Microservice Architecture Stack
+
+```text
+                                  [Internet]
+                                      │
+                                      ▼
+                      ┌──────────────────────────────┐
+                      │ Traefik Ingress LoadBalancer │
+                      │ vikranthsunkarpally.in       │
+                      └──────────────┬───────────────┘
+                                     │  Ingress Path Routing (TLS)
+        ┌────────────────────────────┼────────────────────────────┐
+        │                            │                            │
+        ▼                            ▼                            ▼
+   / (Frontend)               /api (Backend)              /studio (UI_Script)
+        │                            │                            │
+        ▼                            ▼                            ▼
+  ┌───────────┐                ┌───────────┐                ┌───────────┐
+  │  React    │                │  FastAPI  │                │ UI_Script │
+  │ Dashboard │                │    API    │                │ Studio    │
+  │ (Port 80) │                │(Port 8000)│                │(Port 8500)│
+  └───────────┘                └─────┬─────┘                └───────────┘
                                      │
-                                     ▼
-                           ┌───────────────────┐
-                           │  REACT FRONTEND   │
-                           └────────┬──────────┘
-                                    :
-                                    : Login / Signup
-                                    ▼
-                           ┌───────────────────┐
-                           │  PYTHON BACKEND   │
-                           │    (FastAPI)      │
-                           │                   │
-                           │  · Custom JWT Auth│
-                           └───┬───────┬───┬───┘
-                               :       :   :
-                ┌──────────────┘       :   └──────────────┐
-                :                      :                  :
-                ▼                      ▼                  ▼
-         ┌─────────────┐     ┌──────────────┐    ┌──────────────┐
-         │  AZURE CLI  │     │   FASTAPI    │    │   OPENAI     │
-         │             │     │  WEBSOCKET   │    │    API       │
-         │ az resource │     │  (Progress)  │    │              │
-         │ list --rg   │     └──────┬───────┘    │ Cost Analysis│
-         └──────┬──────┘            :            └──────┬───────┘
-                :                   : Live updates      :
-                ▼                   ▼                   :
-         ┌─────────────┐   ┌───────────────┐            :
-         │   AZURE     │   │    REACT      │            :
-         │ (Resource   │   │  (Progress    │            :
-         │   Group)    │   │   Tracker)    │            :
-         └─────────────┘   └───────────────┘            :
-                                                        ▼
-                                                 ┌──────────────┐
-                                                 │    AZURE     │
-                                                 │  POSTGRESQL  │
-                                                 │  (Managed)   │
-                                                 │              │
-                                                 │ · users      │
-                                                 │ · analyses   │
-                                                 └──────┬───────┘
-                                                        :
-                                                        : Stored results
-                                                        ▼
-                                                 ┌───────────────┐
-                                                 │    REACT      │
-                                                 │ (Final Report │
-                                                 │  + Suggestions│
-                                                 │  + Fixes)     │
-                                                 └───────────────┘
+                                     ▼  In-Cluster DNS: postgres-service:5432
+                               ┌───────────┐
+                               │PostgreSQL │
+                               │StatefulSet│
+                               └───────────┘
 ```
 
-## Request Flow
+| Microservice Component | Technology Stack | Local Dev Port | Production Container Target |
+| :--- | :--- | :--- | :--- |
+| **Frontend Dashboard** | React (Vite + TypeScript + Tailwind) | `5173` | `finops-frontend-service:80` |
+| **Backend API** | Python (FastAPI + asyncpg + JWT) | `8000` | `finops-backend-service:8000` |
+| **UI_Script Studio** | Python (FastAPI + Provisioner Engine) | `8500` | `finops-ui-script-service:8500` |
+| **In-Cluster Database** | PostgreSQL 15 StatefulSet (`postgres-0`) | `5432` | `postgres-service.finops.svc.cluster.local:5432` |
 
-```
-①  User ─·─·─► React ─·─·─► FastAPI Auth ─·─·─► JWT (Azure PostgreSQL)
+---
 
-②  User selects Resource Group ─·─·─► Python Backend
+## 📚 Multi-Cloud Step-by-Step Deployment Guides (13 Steps Each)
 
-③  Python ─·─·─► Azure CLI ─·─·─► Fetches all resources in RG
+Complete, 13-step production deployment documentation is available for each cloud provider:
 
-④  Python ─·─·─► FastAPI WebSocket ─·─·─► React (live progress)
+- 🔷 **[Azure AKS Documentation Guide](docs/azure/README.md)** (Steps 01 - 13)
+- 🟧 **[AWS EKS Documentation Guide](docs/aws/README.md)** (Steps 01 - 13)
+- 🟩 **[GCP GKE Documentation Guide](docs/gcp/README.md)** (Steps 01 - 13)
 
-⑤  Python ─·─·─► OpenAI API ─·─·─► Cost analysis
+---
 
-⑥  Python ─·─·─► Azure PostgreSQL ─·─·─► Stores analysis history
+## ⚡ 1-Click Launchers & Automated Scripts
 
-⑦  React ◄·─·─·─ Final report with suggestions & fixes
-```
-
-## What It Detects
-
-- **Over-provisioned resources** — VMs, App Services, or databases sized larger than needed
-- **Unused resources** — Orphaned disks, unattached public IPs, idle load balancers
-- **Misconfigurations** — Wrong pricing tiers, missing auto-shutdown, no reserved instances
-- **Storage & logging costs** — Excessive log retention, no lifecycle policies on blob storage
-
-## Prerequisites
-
-- Azure CLI installed and logged in (`az login`)
-- An active Azure subscription with at least one resource group
-- An Azure Managed PostgreSQL instance
-- An OpenAI API key
-- Python 3.10+
-- Node.js 18+
-
-## How to Run
-
-### Backend
-
+### 1. Simultaneous Local Microservices Stack Launcher
+Run all 3 microservices locally from workspace root:
 ```bash
-cd application/backend
-pip install -r requirements.txt
-cp .env.example .env   # fill in your credentials
-uvicorn main:app --reload
+./start_local.sh
 ```
+- Frontend UI: `http://localhost:5173`
+- Backend API: `http://localhost:8000`
+- UI_Script Studio: `http://localhost:8500`
 
-### Frontend
+### 2. Automated Cloud Infrastructure Deployment Scripts
+- **Azure AKS**: `./deploy-azure.sh`
+- **AWS EKS**: `./deploy-aws.sh`
+- **GCP GKE**: `./deploy-gcp.sh`
 
-```bash
-cd application/frontend
-npm install
-npm run dev
-```
+---
 
-## How It Works
-
-1. User signs up / logs in via custom JWT auth (credentials stored in Azure PostgreSQL)
-2. Selects an Azure Resource Group to analyze
-3. Python backend fetches all resources using Azure CLI
-4. Live progress is streamed to the UI via FastAPI WebSocket
-5. Resource data is sent to OpenAI API for cost analysis
-6. Analysis results are stored in Azure PostgreSQL
-7. Final report with cost breakdown, suggestions, and fix commands is displayed
+## 🛡️ Key Features & Detection Engines
+- **Idle / Unattached Disk Cleanup**: Detects unattached EBS / Azure Managed / GKE Disks.
+- **Over-Provisioned VM & Node Sizing**: Flags CPU/memory underutilization and provides automated resize commands.
+- **In-Cluster PostgreSQL StatefulSet**: Saves $100+/month by eliminating managed database cloud surcharges.
+- **ArgoCD GitOps Sync**: Real-time cluster state reconciliation driven by GitHub pushes.
+- **Full Observability Stack**: Centralized log streaming via Loki & Promtail; metrics scraping via Prometheus ServiceMonitors; Grafana dashboards.

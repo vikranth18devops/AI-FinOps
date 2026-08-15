@@ -70,3 +70,7 @@ asyncio.run(test_db())
 - [x] PVC `postgres-data-postgres-0` is `Bound` to AWS EBS Volume (`gp2`/`gp3`).
 - [x] DNS hostname `postgres-service.finops.svc.cluster.local:5432` resolves cleanly.
 - [x] `remediations` audit table contains active historical records.
+
+---
+
+Next Step: **[12-GitHub Actions CI/CD Pipeline Setup](12-github-actions-ci-cd-aws.md)**

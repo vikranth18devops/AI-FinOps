@@ -1,4 +1,4 @@
-# 12 - One-Click Azure Deployment Script
+# 13 - One-Click Azure Deployment Script
 
 ## 📌 1-Click Automated Script
 

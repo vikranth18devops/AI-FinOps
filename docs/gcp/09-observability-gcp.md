@@ -1,14 +1,14 @@
-# 09 - Observability & Logging Stack on Azure AKS (Prometheus + Grafana + Loki + Alertmanager)
+# 09 - Observability & Logging Stack on GCP GKE (Prometheus + Grafana + Loki + Alertmanager)
 
 <p align="left">
   <img src="https://img.shields.io/badge/Prometheus-Monitoring-E6522C?style=for-the-badge&logo=prometheus&logoColor=white" />
   <img src="https://img.shields.io/badge/Grafana-Dashboards-F46800?style=for-the-badge&logo=grafana&logoColor=white" />
   <img src="https://img.shields.io/badge/Loki-Logging-F46800?style=for-the-badge&logo=grafana&logoColor=white" />
-  <img src="https://img.shields.io/badge/Azure_AKS-Observability-0089D6?style=for-the-badge&logo=microsoft-azure&logoColor=white" />
+  <img src="https://img.shields.io/badge/Google_Cloud-GKE-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white" />
 </p>
 
 ## 📌 Step Overview
-Add a production-grade observability and log aggregation stack to Azure AKS — **Prometheus** (metrics), **Grafana** (dashboards), **Alertmanager** (alerts), **Loki** (log store), and **Promtail** (log shipper).
+Add a production-grade observability and log aggregation stack to GCP GKE — **Prometheus** (metrics), **Grafana** (dashboards), **Alertmanager** (alerts), **Loki** (log store), and **Promtail** (log shipper).
 
 Expose Grafana, Prometheus, and Alertmanager UIs cleanly under sub-paths of your domain **`http://vikranthsunkarpally.in/`**:
 - **Grafana Dashboards**: `http://vikranthsunkarpally.in/grafana/`
@@ -25,7 +25,7 @@ Expose Grafana, Prometheus, and Alertmanager UIs cleanly under sub-paths of your
                                       │
                                       ▼
                       ┌──────────────────────────────┐
-                      │ Traefik LoadBalancer (AKS)   │
+                      │ Traefik LoadBalancer (GKE)   │
                       │ vikranthsunkarpally.in       │
                       └──────────────┬───────────────┘
                                      │  IngressRoutes (sub-paths)
@@ -50,7 +50,7 @@ Expose Grafana, Prometheus, and Alertmanager UIs cleanly under sub-paths of your
    │       ▼                                                              │
    │  ┌──────────┐                                                        │
    │  │   Loki   │ ◀── Promtail (DaemonSet) tails container logs           │
-   │  │(10Gi PVC)│     on every AKS node                                  │
+   │  │(10Gi PVC)│     on every GKE node                                  │
    │  └──────────┘                                                        │
    │ Namespace: logging                                                   │
    └──────────────────────────────────────────────────────────────────────────┘
@@ -67,10 +67,15 @@ Install the `kube-prometheus-stack` chart into the `observability` namespace wit
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts --force-update
 helm repo update
 
-# 2. Deploy kube-prometheus-stack
+# 2. Deploy kube-prometheus-stack (disabling GKE control plane scrapers that are managed by Google)
 helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
   --namespace observability --create-namespace \
   --set fullnameOverride=kube-prometheus \
+  --set kubeEtcd.enabled=false \
+  --set kubeScheduler.enabled=false \
+  --set kubeControllerManager.enabled=false \
+  --set kubeProxy.enabled=false \
+  --set coreDns.enabled=false \
   --set grafana.enabled=true \
   --set grafana.ingress.enabled=false \
   --set 'grafana.grafana\.ini.server.domain=vikranthsunkarpally.in' \
@@ -93,7 +98,7 @@ kubectl get pods -n observability
 
 ## ⚡ Step 2: Install Loki & Promtail Log Aggregator (`loki-stack`)
 
-Install Loki and Promtail in the `logging` namespace to collect and index container logs across all AKS worker nodes:
+Install Loki and Promtail in the `logging` namespace to collect and index container logs across all GKE worker nodes:
 
 ```bash
 # 1. Add Grafana Helm repository
@@ -265,4 +270,4 @@ Open **`http://vikranthsunkarpally.in/prometheus/`** to run PromQL queries:
 
 ---
 
-Next Step: **[10-HTTPS TLS with Let's Encrypt & Path-Routed Sub-Apps](10-https-letsencrypt-azure.md)**
+Next Step: **[10-HTTPS TLS with Let's Encrypt & Path-Routed Sub-Apps](10-https-letsencrypt-gcp.md)**

@@ -1,30 +1,47 @@
-# 03 - Kubectl GKE Context Setup
-
-<p align="left">
-  <img src="https://img.shields.io/badge/Kubernetes-kubectl-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white" />
-  <img src="https://img.shields.io/badge/Google_Cloud-gcloud_CLI-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white" />
-</p>
+# 03 - Connect Kubectl Context to Google GKE
 
 ## 📌 Step Overview
-Fetch authentication credentials and configure `kubectl` context to connect to your GKE Kubernetes cluster.
+After provisioning the GKE cluster with Terraform, you must fetch cluster credentials and bind your local `kubectl` CLI context to the newly created **Google Kubernetes Engine (GKE)** cluster.
 
 ---
 
-## ⚡ Execution Commands
+## ⚡ Connection Commands
+
+Execute `gcloud container clusters get-credentials` to download cluster kubeconfig credentials:
 
 ```bash
-# Set GCP Project ID & Region
+# 1. Export GCP Project ID, Region & GKE Cluster Name
 export PROJECT_ID=$(gcloud config get-value project)
-export REGION="us-east1"
-export CLUSTER_NAME="finops-gke-cluster"
+export REGION="us-central1"
+export GKE_CLUSTER_NAME="finops-gke-cluster"
 
-# Fetch GKE Cluster Credentials
-gcloud container clusters get-credentials $CLUSTER_NAME --region $REGION --project $PROJECT_ID
-
-# Verify connection to GKE cluster
-kubectl get nodes -o wide
+# 2. Update Kubeconfig Credentials
+gcloud container clusters get-credentials "$GKE_CLUSTER_NAME" \
+  --region "$REGION" \
+  --project "$PROJECT_ID"
 ```
 
 ---
 
-Next Step: **[04-Namespaces and RBAC Setup](04-namespaces-and-rbac.md)**
+## 🔍 Verification Commands
+
+### 1. Verify Current Kubectl Context
+```bash
+kubectl config current-context
+```
+
+### 2. Verify Cluster Worker Nodes
+List all nodes running in your GKE cluster:
+```bash
+kubectl get nodes -o wide
+```
+
+### 3. Check System Pods Health
+Ensure core Kubernetes system services (CoreDNS, kube-proxy, fluentbit) are running cleanly:
+```bash
+kubectl get pods -n kube-system
+```
+
+---
+
+Next Step: **[04-Namespaces & Workload Identity RBAC](04-namespaces-and-rbac.md)**

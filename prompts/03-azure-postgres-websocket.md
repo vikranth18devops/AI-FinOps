@@ -1,44 +1,45 @@
-# Prompt 3: Azure PostgreSQL + WebSocket Progress Tracking
+# 🗄️ Prompt 3: In-Cluster PostgreSQL StatefulSet & WebSocket Real-Time Progress
 
-Build on top of the existing FastAPI backend. Add Azure Managed PostgreSQL for storing users and analysis history, and FastAPI WebSocket for live progress updates.
+<p align="left">
+  <img src="https://img.shields.io/badge/PostgreSQL-15_StatefulSet-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" />
+  <img src="https://img.shields.io/badge/FastAPI-WebSocket-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
+  <img src="https://img.shields.io/badge/AsyncPG-Connection_Pool-005C8A?style=for-the-badge&logo=python&logoColor=white" />
+</p>
 
-## What to build
+Build on top of the existing FastAPI backend. Connect to the in-cluster PostgreSQL StatefulSet (`postgres-service.finops.svc.cluster.local:5432`) for storing users, cost investigations, and remediation execution logs, and add WebSockets for live progress tracking.
 
-### Database (Azure Managed PostgreSQL)
+## 📌 Requirements
 
-- Connect to an Azure Managed PostgreSQL instance using `asyncpg` or `psycopg2`.
-- Store the database connection string in `.env` (`DATABASE_URL`).
-- Create two tables on startup:
-  - `users` — id, email, password_hash, created_at
-  - `analyses` — id, user_id, resource_group, resources_scanned (int), issues_found (int), estimated_savings (text), analysis_result (jsonb), status, created_at
-- After AI analysis completes, store the full result in the `analyses` table.
-- Add a `GET /api/history` endpoint that returns past analyses for the authenticated user.
+### 1. In-Cluster PostgreSQL Database
+- Connect using `asyncpg` with connection pooling.
+- Configure `DATABASE_URL` in `.env`.
+- Auto-initialize schema on startup:
+  - `users`: `id`, `email`, `password_hash`, `created_at`
+  - `analyses`: `id`, `user_id`, `resource_group`, `resources_scanned`, `issues_found`, `estimated_savings`, `analysis_result` (JSONB), `status`, `created_at`
+  - `remediations`: `id`, `user_email`, `resource_group`, `command`, `status`, `estimated_savings`, `created_at`
+- Add `GET /api/history` endpoint with **15-item pagination support** returning cumulative dollar savings KPI card data ($ Saved to Date).
 
-### WebSocket Progress
+### 2. WebSocket Real-Time Progress
+- Expose WebSocket endpoint `ws://localhost:8000/ws/progress/{analysis_id}`.
+- Stream live progress updates during analysis:
+  - `"10% - Authenticating & fetching resource groups..."`
+  - `"35% - Scanning cloud resources across subscription..."`
+  - `"65% - Running GPT-4o FinOps cost investigation..."`
+  - `"90% - Logging results to PostgreSQL..."`
+  - `"100% - Analysis complete"`
 
-- Add a WebSocket endpoint `ws://localhost:8000/ws/progress/{analysis_id}`.
-- During the `POST /api/analyze` flow, push progress messages through the WebSocket at each stage:
-  - `"Fetching resource groups..."`
-  - `"Scanning resources in <rg>..."`
-  - `"Analyzing costs with AI..."`
-  - `"Storing results..."`
-  - `"Analysis complete"`
-- The frontend will connect to this WebSocket to show live progress.
+---
 
-### Update .env.example
+## 🏗️ Project Structure Update
 
-Add `DATABASE_URL` to `.env.example`.
-
-## Project structure update
-
-```
-backend/
-├── main.py          (updated — history endpoint, WebSocket, DB init)
+```text
+application/backend/
+├── main.py          (updated — WebSocket & history endpoints)
+├── db.py            (new — asyncpg connection pool & schema init)
 ├── azure_scanner.py (no change)
 ├── ai_analyzer.py   (no change)
-├── db.py            (new — DB connection, table creation, queries)
-├── requirements.txt (updated — add asyncpg/psycopg2, websockets)
-├── .env.example     (updated — add DATABASE_URL)
+├── requirements.txt (updated — asyncpg, websockets)
+└── .env.example     (updated — DATABASE_URL)
 ```
 
-Refer to `Architecture.MD` and `RequestFlow.MD`. This covers steps ④ and ⑥ of the request flow.
+Refer to [Architecture.MD](file:///Users/aarvik/Documents/123/Architecture.MD) and [RequestFlow.MD](file:///Users/aarvik/Documents/123/RequestFlow.MD).

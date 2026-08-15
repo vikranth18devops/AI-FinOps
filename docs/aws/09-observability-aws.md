@@ -1,14 +1,14 @@
-# 09 - Observability & Logging Stack on Azure AKS (Prometheus + Grafana + Loki + Alertmanager)
+# 09 - Observability & Logging Stack on AWS EKS (Prometheus + Grafana + Loki + Alertmanager)
 
 <p align="left">
   <img src="https://img.shields.io/badge/Prometheus-Monitoring-E6522C?style=for-the-badge&logo=prometheus&logoColor=white" />
   <img src="https://img.shields.io/badge/Grafana-Dashboards-F46800?style=for-the-badge&logo=grafana&logoColor=white" />
   <img src="https://img.shields.io/badge/Loki-Logging-F46800?style=for-the-badge&logo=grafana&logoColor=white" />
-  <img src="https://img.shields.io/badge/Azure_AKS-Observability-0089D6?style=for-the-badge&logo=microsoft-azure&logoColor=white" />
+  <img src="https://img.shields.io/badge/Amazon_EKS-Observability-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" />
 </p>
 
 ## 📌 Step Overview
-Add a production-grade observability and log aggregation stack to Azure AKS — **Prometheus** (metrics), **Grafana** (dashboards), **Alertmanager** (alerts), **Loki** (log store), and **Promtail** (log shipper).
+Add a production-grade observability and log aggregation stack to AWS EKS — **Prometheus** (metrics), **Grafana** (dashboards), **Alertmanager** (alerts), **Loki** (log store), and **Promtail** (log shipper).
 
 Expose Grafana, Prometheus, and Alertmanager UIs cleanly under sub-paths of your domain **`http://vikranthsunkarpally.in/`**:
 - **Grafana Dashboards**: `http://vikranthsunkarpally.in/grafana/`
@@ -25,7 +25,7 @@ Expose Grafana, Prometheus, and Alertmanager UIs cleanly under sub-paths of your
                                       │
                                       ▼
                       ┌──────────────────────────────┐
-                      │ Traefik LoadBalancer (AKS)   │
+                      │ Traefik LoadBalancer (EKS)   │
                       │ vikranthsunkarpally.in       │
                       └──────────────┬───────────────┘
                                      │  IngressRoutes (sub-paths)
@@ -50,7 +50,7 @@ Expose Grafana, Prometheus, and Alertmanager UIs cleanly under sub-paths of your
    │       ▼                                                              │
    │  ┌──────────┐                                                        │
    │  │   Loki   │ ◀── Promtail (DaemonSet) tails container logs           │
-   │  │(10Gi PVC)│     on every AKS node                                  │
+   │  │(10Gi PVC)│     on every EKS node                                  │
    │  └──────────┘                                                        │
    │ Namespace: logging                                                   │
    └──────────────────────────────────────────────────────────────────────────┘
@@ -93,7 +93,7 @@ kubectl get pods -n observability
 
 ## ⚡ Step 2: Install Loki & Promtail Log Aggregator (`loki-stack`)
 
-Install Loki and Promtail in the `logging` namespace to collect and index container logs across all AKS worker nodes:
+Install Loki and Promtail in the `logging` namespace to collect and index container logs across all EKS worker nodes:
 
 ```bash
 # 1. Add Grafana Helm repository
@@ -265,4 +265,4 @@ Open **`http://vikranthsunkarpally.in/prometheus/`** to run PromQL queries:
 
 ---
 
-Next Step: **[10-HTTPS TLS with Let's Encrypt & Path-Routed Sub-Apps](10-https-letsencrypt-azure.md)**
+Next Step: **[10-HTTPS TLS with Let's Encrypt & Path-Routed Sub-Apps](10-https-letsencrypt-aws.md)**
