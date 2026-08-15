@@ -564,8 +564,9 @@
       }
     }
 
-    // Initialize with Azure
+    // Initialize with Azure & start auto-polling authentication status every 3s
     setCloudProvider('azure');
+    setInterval(checkAuthStatus, 3000);
   </script>
 </body>
 </html>
