@@ -26,11 +26,17 @@ module "networking" {
   gcp_region     = var.gcp_region
 }
 
-# Module 2: GCP GKE Autopilot Cluster
+# Module 2: GCP GKE Kubernetes Cluster
 module "gke" {
   source         = "./modules/gke"
+  cluster_name   = var.gke_cluster_name
   gcp_project_id = var.gcp_project_id
   gcp_region     = var.gcp_region
   network_name   = module.networking.network_name
   subnet_name    = module.networking.subnet_name
+  machine_type   = var.gke_machine_type
+  node_count     = var.gke_node_count
+  min_node_count = var.gke_min_node_count
+  max_node_count = var.gke_max_node_count
+  environment    = var.environment
 }

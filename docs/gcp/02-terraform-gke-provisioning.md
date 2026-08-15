@@ -19,7 +19,7 @@ Run the following `gcloud` CLI commands to create the GCS bucket for remote stat
 # 1. Set environment variables
 export PROJECT_ID=$(gcloud config get-value project)
 export GCS_BUCKET_NAME="tfstate-finops-gcp-$RANDOM"
-export LOCATION="us-central1"
+export LOCATION="us-east1"
 
 # 2. Create GCS Bucket for Terraform State
 gcloud storage buckets create gs://$GCS_BUCKET_NAME \

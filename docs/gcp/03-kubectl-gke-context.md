@@ -15,7 +15,7 @@ Fetch authentication credentials and configure `kubectl` context to connect to y
 ```bash
 # Set GCP Project ID & Region
 export PROJECT_ID=$(gcloud config get-value project)
-export REGION="us-central1"
+export REGION="us-east1"
 export CLUSTER_NAME="finops-gke-cluster"
 
 # Fetch GKE Cluster Credentials

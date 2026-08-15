@@ -29,7 +29,13 @@ module "networking" {
 
 # Module 2: AWS EKS Kubernetes Cluster
 module "eks" {
-  source     = "./modules/eks"
-  vpc_id     = module.networking.vpc_id
-  subnet_ids = module.networking.subnet_ids
+  source         = "./modules/eks"
+  cluster_name   = var.eks_cluster_name
+  vpc_id         = module.networking.vpc_id
+  subnet_ids     = module.networking.subnet_ids
+  instance_type  = var.eks_instance_type
+  node_count     = var.eks_node_count
+  min_node_count = var.eks_min_node_count
+  max_node_count = var.eks_max_node_count
+  environment    = var.environment
 }

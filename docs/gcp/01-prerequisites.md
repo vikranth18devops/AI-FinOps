@@ -198,7 +198,7 @@ cat gcp-key.json
 | Secret Name | Value to Paste |
 | :--- | :--- |
 | **`GCP_PROJECT_ID`** | Output of `gcloud config get-value project` |
-| **`GCP_REGION`** | `us-central1` (or your GCP region) |
+| **`GCP_REGION`** | `us-east1` (or your GCP region) |
 | **`GCP_SA_KEY`** | Full raw JSON content from `cat gcp-key.json` |
 
 4. Clean up local key file for security:

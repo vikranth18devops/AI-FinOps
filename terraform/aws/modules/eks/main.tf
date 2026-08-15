@@ -10,6 +10,11 @@ resource "aws_iam_role" "eks_cluster" {
   })
 }
 
+resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+  role       = aws_iam_role.eks_cluster.name
+}
+
 resource "aws_eks_cluster" "main" {
   name     = var.cluster_name
   role_arn = aws_iam_role.eks_cluster.arn
@@ -17,6 +22,10 @@ resource "aws_eks_cluster" "main" {
   vpc_config {
     subnet_ids = var.subnet_ids
   }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.eks_cluster_policy
+  ]
 }
 
 resource "aws_iam_role" "eks_nodes" {
@@ -31,6 +40,21 @@ resource "aws_iam_role" "eks_nodes" {
   })
 }
 
+resource "aws_iam_role_policy_attachment" "eks_worker_node_policy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+  role       = aws_iam_role.eks_nodes.name
+}
+
+resource "aws_iam_role_policy_attachment" "eks_cni_policy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+  role       = aws_iam_role.eks_nodes.name
+}
+
+resource "aws_iam_role_policy_attachment" "eks_container_registry" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+  role       = aws_iam_role.eks_nodes.name
+}
+
 resource "aws_eks_node_group" "main" {
   cluster_name    = aws_eks_cluster.main.name
   node_group_name = "finops-nodes"
@@ -38,10 +62,21 @@ resource "aws_eks_node_group" "main" {
   subnet_ids      = var.subnet_ids
 
   scaling_config {
-    desired_size = 3
-    max_size     = 5
-    min_size     = 1
+    desired_size = var.node_count
+    min_size     = var.min_node_count
+    max_size     = var.max_node_count
   }
 
-  instance_types = ["t3.xlarge"]
+  instance_types = [var.instance_type]
+
+  labels = {
+    role        = "worker"
+    environment = var.environment
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.eks_worker_node_policy,
+    aws_iam_role_policy_attachment.eks_cni_policy,
+    aws_iam_role_policy_attachment.eks_container_registry
+  ]
 }
