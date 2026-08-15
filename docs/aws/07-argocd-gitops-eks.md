@@ -105,19 +105,19 @@ EOF
 ```bash
 # 1. Fetch Traefik Public LoadBalancer Hostname (or IP)
 export TRAEFIK_IP=$(kubectl get svc -n ingress-traefik traefik -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
-if [ -z "$TRAEFIK_IP" ]; then
-  export TRAEFIK_IP=$(kubectl get svc -n ingress-traefik traefik -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-fi
+echo "TRAEFIK_IP: ${TRAEFIK_IP}"
 
 # 2. Retrieve initial admin password
 export ARGOCD_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d)
+echo "ARGOCD_PASSWORD: ${ARGOCD_PASSWORD}"
 
-echo "================================================================="
+# 3. Print ArgoCD Access Details
+echo "================================================="
 echo "  ✓ ArgoCD Exposed Successfully!"
 echo "  • Access URL: http://${TRAEFIK_IP}/argocd/"
 echo "  • Username:   admin"
 echo "  • Password:   ${ARGOCD_PASSWORD}"
-echo "================================================================="
+echo "================================================="
 ```
 
 ---
