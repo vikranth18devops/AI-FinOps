@@ -207,4 +207,27 @@ postgres-0                          1/1     Running   0          5m
 
 ---
 
+## 🌐 Live Production Application Access Endpoints
+
+Once all pods reach `1/1 Running`, access your live multi-cloud production application services using your Traefik Public LoadBalancer Hostname (`${TRAEFIK_IP}`):
+
+1. 📱 **React Frontend Dashboard**:
+   - **Access URL**: `http://${TRAEFIK_IP}/`
+   - **Description**: Full React + TypeScript FinOps Dashboard with real-time cost scanning, resource group metrics, and AI recommendations.
+
+2. 🚀 **UI_Script Multi-Cloud Provisioning Studio**:
+   - **Access URL**: `http://${TRAEFIK_IP}/studio`
+   - **Description**: Web Studio for real-time streaming execution and teardown of Azure, AWS, and GCP infrastructure environments (`dev`, `qa`, `prd`).
+
+3. ⚡ **FastAPI Backend API**:
+   - **Access URL**: `http://${TRAEFIK_IP}/api/`
+   - **Description**: FastAPI backend handling JWT authentication, Azure resource scanning, AI cost analysis, and PostgreSQL auditing.
+
+4. ⛵ **ArgoCD GitOps Continuous Delivery UI**:
+   - **Access URL**: `http://${TRAEFIK_IP}/argocd/`
+   - **Username**: `admin`
+   - **Password**: Run `kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d` to print initial password.
+
+---
+
 Next Step: **[08-Custom Domain & GoDaddy DNS Integration](08-godaddy-dns-aws.md)**
