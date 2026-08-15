@@ -4,7 +4,7 @@ This directory contains the step-by-step execution guides for provisioning, conf
 
 ---
 
-## 🗺️ Step-by-Step Documentation Index
+## 🗺️ Step-by-Step Documentation Index (1 - 11)
 
 1. **[01 - Prerequisites & Tooling Setup](01-prerequisites.md)**: Install Azure CLI, Terraform, Helm, kubectl, and configure ACR credentials.
 2. **[02 - Terraform AKS Provisioning](02-terraform-aks-provisioning.md)**: Setup remote state backend inside `finops-global-rg` (`eastus`) and provision AKS cluster with VNet.
@@ -12,12 +12,11 @@ This directory contains the step-by-step execution guides for provisioning, conf
 4. **[04 - Namespaces & RBAC Setup](04-namespaces-and-rbac.md)**: Create `finops`, `ingress-traefik`, `observability`, and `argocd` namespaces with RBAC roles.
 5. **[05 - Deploy In-Cluster PostgreSQL StatefulSet](05-in-cluster-postgresql.md)**: Deploy local PostgreSQL database (`postgres:15-alpine`) with 10Gi PVC storage.
 6. **[06 - Traefik Ingress Setup on AKS](06-traefik-ingress-azure.md)**: Deploy Traefik v3 Ingress LoadBalancer and fetch Public IP.
-7. **[07 - Helm Application Deployment & HPA Setup](07-helm-app-deployment-aks.md)**: Deploy the 3 microservices with HorizontalPodAutoscaler (HPA).
-8. **[08 - ArgoCD GitOps Continuous Deployment Setup](08-argocd-gitops-aks.md)**: Configure automated GitOps synchronization via ArgoCD on AKS.
-9. **[09 - Observability Stack on AKS](09-observability-azure.md)**: Deploy Prometheus Operator, Grafana dashboards, and Loki log aggregator.
-10. **[10 - PostgreSQL Validation & Connection Testing](10-postgresql-validation-azure.md)**: Validate database schema, active remediations, and inter-pod connectivity.
-11. **[11 - GitHub Actions CI/CD Pipeline Setup](11-github-actions-ci-cd-azure.md)**: Configure automated ACR image building and GitOps version bumping.
-12. **[12 - One-Click Azure Deployment Script](12-one-click-azure-deploy.md)**: One-command automated cluster deployment and teardown guide.
+7. **[07 - ArgoCD GitOps Continuous Deployment Setup](07-argocd-gitops-aks.md)**: Deploy the full microservices stack via automated GitOps synchronization powered by ArgoCD.
+8. **[08 - Observability Stack on AKS](08-observability-azure.md)**: Deploy Prometheus Operator, Grafana dashboards, and Loki log aggregator.
+9. **[09 - PostgreSQL Validation & Connection Testing](09-postgresql-validation-azure.md)**: Validate database schema, active remediations, and inter-pod connectivity.
+10. **[10 - GitHub Actions CI/CD Pipeline Setup](10-github-actions-ci-cd-azure.md)**: Configure automated ACR image building and GitOps version bumping.
+11. **[11 - One-Click Azure Deployment Script](11-one-click-azure-deploy.md)**: One-command automated cluster deployment and teardown guide.
 
 ---
 

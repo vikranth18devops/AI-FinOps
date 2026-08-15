@@ -1,4 +1,4 @@
-# 09 - Observability Stack on Azure AKS (Prometheus + Grafana + Loki)
+# 08 - Observability Stack on Azure AKS (Prometheus + Grafana + Loki)
 
 ## 📌 Step Overview
 Deploy full observability tooling inside namespace `observability` to monitor cluster health, pod performance metrics, and centralized log streams.
@@ -41,4 +41,4 @@ helm upgrade --install loki grafana/loki-stack \
 
 ---
 
-Next Step: **[10-PostgreSQL Validation & Connection Testing](10-postgresql-validation-azure.md)**
+Next Step: **[09-PostgreSQL Validation & Connection Testing](09-postgresql-validation-azure.md)**

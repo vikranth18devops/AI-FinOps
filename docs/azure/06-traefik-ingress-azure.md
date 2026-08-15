@@ -36,4 +36,4 @@ traefik   LoadBalancer   10.0.150.20    20.12.180.45    80:32014/TCP,443:31980/T
 
 ---
 
-Next Step: **[07-Helm Application Deployment](07-helm-app-deployment-azure.md)**
+Next Step: **[07-ArgoCD GitOps Continuous Deployment](07-argocd-gitops-aks.md)**
