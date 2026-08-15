@@ -30,8 +30,8 @@ variable "aks_node_count" {
 
 variable "aks_node_vm_size" {
   type        = string
-  default     = "Standard_D2s_v5"
-  description = "Azure VM Instance SKU for AKS worker nodes"
+  default     = "Standard_B2s"
+  description = "Azure VM Instance SKU for AKS worker nodes (B-Series Burstable)"
 }
 
 variable "aks_os_disk_size_gb" {
