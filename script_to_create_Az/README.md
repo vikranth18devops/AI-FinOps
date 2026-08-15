@@ -53,10 +53,10 @@ Provisions 3 resource groups (`finops-cloud-dev-rg`, `finops-cloud-qa-rg`, `fino
 ```
 
 ### 2. Custom Prefix & Region
-Pass your custom prefix and region as command-line arguments (e.g. `snapthreadz` in `westeurope`):
+Pass your custom prefix and region as command-line arguments (e.g. `snapthreadz` in `eastus`):
 
 ```bash
-./create_azure_resources.sh snapthreadz westeurope
+./create_azure_resources.sh snapthreadz eastus
 ```
 
 ### 3. Display Help Menu

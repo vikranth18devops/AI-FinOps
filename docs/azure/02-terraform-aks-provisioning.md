@@ -30,16 +30,17 @@ Run the following Azure CLI commands in your terminal to create the Resource Gro
 export STATE_RG="finops-global-rg"
 export STORAGE_ACCOUNT_NAME="tfstatefinops$RANDOM"
 export CONTAINER_NAME="tfstate"
-export LOCATION="westeurope"
+export LOCATION="eastus"
 
-# 2. Create Azure Global Resource Group
+# 2. Create Azure Global Resource Group in East US
 az group create --name $STATE_RG --location $LOCATION
 
-# 3. Create Azure Storage Account inside finops-global-rg
+# 3. Create Azure Storage Account inside finops-global-rg in East US
 az storage account create \
     --resource-group $STATE_RG \
     --name $STORAGE_ACCOUNT_NAME \
     --sku Standard_LRS \
+    --location $LOCATION \
     --encryption-services blob
 
 # 4. Create Blob Storage Container

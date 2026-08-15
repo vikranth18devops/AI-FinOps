@@ -32,7 +32,7 @@ usage() {
     echo "  LOCATION      Azure Region (default: eastus)"
     echo ""
     echo "Examples:"
-    echo "  $0 snapthreadz westeurope"
+    echo "  $0 snapthreadz eastus"
     echo "  $0 --destroy snapthreadz"
     exit 0
 }

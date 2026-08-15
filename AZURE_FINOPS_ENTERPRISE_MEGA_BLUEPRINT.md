@@ -172,7 +172,7 @@ Located in [`application/UI_Script`](file:///Users/aarvik/Documents/123/applicat
 ## 7. Step-by-Step Manager & C-Level Live Demonstration Script
 
 1. **Launch Full Stack**: Run `./start_local.sh` from workspace root.
-2. **Access Provisioner Studio**: Open `http://localhost:8500`, pick **Azure**, select region `westeurope`, click `+ dev`, and hit **`🚀 Create 12 AZURE Resources`**.
+2. **Access Provisioner Studio**: Open `http://localhost:8500`, pick **Azure**, select region `eastus`, click `+ dev`, and hit **`🚀 Create 12 AZURE Resources`**.
 3. **Observe Live Progress**: Watch the real-time progress bar hit `100%` and view direct links to Azure Portal.
 4. **Scan in Main Dashboard**: Open `http://localhost:5173`, select `snapthreadz-dev-rg`, and click **`Execute AI Cost Scan`**.
 5. **Execute Remediation**: Click **`Run Fix Command`** to resolve an unattached disk or deallocated VM, observing immediate savings updates.

@@ -48,7 +48,7 @@ Provisions 12 resources per environment in Azure:
 
 To tear down all resources:
 ```bash
-./script_to_create_Az/create_azure_resources.sh --destroy --envs dev,qa,prd snapthreadz westeurope
+./script_to_create_Az/create_azure_resources.sh --destroy --envs dev,qa,prd snapthreadz eastus
 ```
 
 ---
