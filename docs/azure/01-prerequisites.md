@@ -34,7 +34,7 @@ az login
 # Set Active Subscription (if multiple exist)
 az account set --subscription <YOUR_SUBSCRIPTION_ID>
 ```
-
+az account set --subscription afa17bb6-6630-4872-8141-2a62d46e3053
 ---
 
 ### 2️⃣ Kubernetes CLI (`kubectl`)
@@ -129,7 +129,7 @@ az acr show --name $ACR_NAME --query loginServer -o tsv
 # Example Output: finopsacr2026.azurecr.io
 
 # 2. Get ACR Username
-az acr credential show --name $ACR_NAME --query username -o tsv
+az acr credential show --name $ACR_NAME --query username -o tsv 
 # Example Output: finopsacr2026
 
 # 3. Get ACR Password
