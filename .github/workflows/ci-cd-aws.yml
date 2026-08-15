@@ -3,11 +3,6 @@ name: AWS EKS CI/CD Enterprise Production Pipeline
 on:
   push:
     branches: [ "main" ]
-    paths:
-      - 'docs/aws/**'
-      - 'terraform/aws/**'
-      - '.github/workflows/ci-cd-aws.yml'
-      - 'deploy-aws.sh'
   workflow_dispatch:
 
 permissions:
@@ -81,29 +76,53 @@ jobs:
   # 4. Backend Docker Build & Push (Parallel)
   ################################################################################
   backend-build:
-    name: 🐳 Backend Docker Build & Push (AWS ECR)
+    name: 🐳 Backend Docker Build & Push (AWS ECR / GHCR)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+
       - name: Configure AWS Credentials
+        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' }}
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+
       - name: Log in to Amazon ECR
+        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' }}
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Log in to GitHub Container Registry (GHCR Fallback)
+        if: ${{ secrets.AWS_ACCESS_KEY_ID == '' }}
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build & Push Backend Docker Image
+        env:
+          AWS_KEY: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          IMAGE_TAG="${{ steps.login-ecr.outputs.registry }}/finops-backend:${{ github.sha }}"
+          if [ -n "$AWS_KEY" ] && [ -n "$ECR_REGISTRY" ]; then
+            IMAGE_TAG="${ECR_REGISTRY}/finops-backend:${{ github.sha }}"
+          else
+            REPO_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+            IMAGE_TAG="ghcr.io/${REPO_OWNER}/finops-backend:${{ github.sha }}"
+          fi
+          echo "Target Image Tag: ${IMAGE_TAG}"
+          echo "TARGET_IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
           docker build -t $IMAGE_TAG -f ./application/backend/Dockerfile .
           docker push $IMAGE_TAG
+
       - name: Run Trivy Image Vulnerability Scan (Backend)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: "${{ steps.login-ecr.outputs.registry }}/finops-backend:${{ github.sha }}"
+          image-ref: ${{ env.TARGET_IMAGE_TAG }}
           format: 'table'
           severity: 'CRITICAL,HIGH'
           exit-code: '0'
@@ -112,29 +131,53 @@ jobs:
   # 5. Frontend Docker Build & Push (Parallel)
   ################################################################################
   frontend-build:
-    name: 📱 Frontend Docker Build & Push (AWS ECR)
+    name: 📱 Frontend Docker Build & Push (AWS ECR / GHCR)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+
       - name: Configure AWS Credentials
+        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' }}
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+
       - name: Log in to Amazon ECR
+        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' }}
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Log in to GitHub Container Registry (GHCR Fallback)
+        if: ${{ secrets.AWS_ACCESS_KEY_ID == '' }}
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build & Push Frontend Docker Image
+        env:
+          AWS_KEY: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          IMAGE_TAG="${{ steps.login-ecr.outputs.registry }}/finops-frontend:${{ github.sha }}"
+          if [ -n "$AWS_KEY" ] && [ -n "$ECR_REGISTRY" ]; then
+            IMAGE_TAG="${ECR_REGISTRY}/finops-frontend:${{ github.sha }}"
+          else
+            REPO_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+            IMAGE_TAG="ghcr.io/${REPO_OWNER}/finops-frontend:${{ github.sha }}"
+          fi
+          echo "Target Image Tag: ${IMAGE_TAG}"
+          echo "TARGET_IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
           docker build -t $IMAGE_TAG -f ./application/frontend/Dockerfile .
           docker push $IMAGE_TAG
+
       - name: Run Trivy Image Vulnerability Scan (Frontend)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: "${{ steps.login-ecr.outputs.registry }}/finops-frontend:${{ github.sha }}"
+          image-ref: ${{ env.TARGET_IMAGE_TAG }}
           format: 'table'
           severity: 'CRITICAL,HIGH'
           exit-code: '0'
@@ -143,29 +186,53 @@ jobs:
   # 6. UI_Script Provisioner Docker Build & Push (Parallel)
   ################################################################################
   ui-script-build:
-    name: 🚀 UI_Script Provisioner Docker Build & Push (AWS ECR)
+    name: 🚀 UI_Script Provisioner Docker Build & Push (AWS ECR / GHCR)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+
       - name: Configure AWS Credentials
+        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' }}
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION || 'us-east-1' }}
+
       - name: Log in to Amazon ECR
+        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' }}
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Log in to GitHub Container Registry (GHCR Fallback)
+        if: ${{ secrets.AWS_ACCESS_KEY_ID == '' }}
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build & Push UI_Script Provisioner Docker Image
+        env:
+          AWS_KEY: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          IMAGE_TAG="${{ steps.login-ecr.outputs.registry }}/finops-ui-script:${{ github.sha }}"
+          if [ -n "$AWS_KEY" ] && [ -n "$ECR_REGISTRY" ]; then
+            IMAGE_TAG="${ECR_REGISTRY}/finops-ui-script:${{ github.sha }}"
+          else
+            REPO_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+            IMAGE_TAG="ghcr.io/${REPO_OWNER}/finops-ui-script:${{ github.sha }}"
+          fi
+          echo "Target Image Tag: ${IMAGE_TAG}"
+          echo "TARGET_IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
           docker build -t $IMAGE_TAG -f ./application/UI_Script/Dockerfile .
           docker push $IMAGE_TAG
+
       - name: Run Trivy Image Vulnerability Scan (UI_Script)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: "${{ steps.login-ecr.outputs.registry }}/finops-ui-script:${{ github.sha }}"
+          image-ref: ${{ env.TARGET_IMAGE_TAG }}
           format: 'table'
           severity: 'CRITICAL,HIGH'
           exit-code: '0'

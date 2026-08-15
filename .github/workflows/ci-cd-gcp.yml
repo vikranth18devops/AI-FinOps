@@ -3,11 +3,6 @@ name: GCP GKE CI/CD Enterprise Production Pipeline
 on:
   push:
     branches: [ "main" ]
-    paths:
-      - 'docs/gcp/**'
-      - 'terraform/gcp/**'
-      - '.github/workflows/ci-cd-gcp.yml'
-      - 'deploy-gcp.sh'
   workflow_dispatch:
 
 permissions:
@@ -81,28 +76,55 @@ jobs:
   # 4. Backend Docker Build & Push (Parallel)
   ################################################################################
   backend-build:
-    name: 🐳 Backend Docker Build & Push (GCP GAR)
+    name: 🐳 Backend Docker Build & Push (GCP GAR / GHCR)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+
       - name: Authenticate to Google Cloud
+        if: ${{ secrets.GCP_SA_KEY != '' }}
         uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
+
       - name: Set up Cloud SDK
+        if: ${{ secrets.GCP_SA_KEY != '' }}
         uses: google-github-actions/setup-gcloud@v1
+
       - name: Configure Docker for Artifact Registry
+        if: ${{ secrets.GCP_SA_KEY != '' }}
         run: gcloud auth configure-docker ${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev
+
+      - name: Log in to GitHub Container Registry (GHCR Fallback)
+        if: ${{ secrets.GCP_SA_KEY == '' }}
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build & Push Backend Docker Image
+        env:
+          GCP_KEY: ${{ secrets.GCP_SA_KEY }}
+          GCP_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+          GCP_REG: ${{ secrets.GCP_REGION || 'us-central1' }}
         run: |
-          IMAGE_TAG="${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/finops-repo/backend:${{ github.sha }}"
+          if [ -n "$GCP_KEY" ] && [ -n "$GCP_PROJECT" ]; then
+            IMAGE_TAG="${GCP_REG}-docker.pkg.dev/${GCP_PROJECT}/finops-repo/backend:${{ github.sha }}"
+          else
+            REPO_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+            IMAGE_TAG="ghcr.io/${REPO_OWNER}/backend:${{ github.sha }}"
+          fi
+          echo "Target Image Tag: ${IMAGE_TAG}"
+          echo "TARGET_IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
           docker build -t $IMAGE_TAG -f ./application/backend/Dockerfile .
           docker push $IMAGE_TAG
+
       - name: Run Trivy Image Vulnerability Scan (Backend)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: "${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/finops-repo/backend:${{ github.sha }}"
+          image-ref: ${{ env.TARGET_IMAGE_TAG }}
           format: 'table'
           severity: 'CRITICAL,HIGH'
           exit-code: '0'
@@ -111,28 +133,55 @@ jobs:
   # 5. Frontend Docker Build & Push (Parallel)
   ################################################################################
   frontend-build:
-    name: 📱 Frontend Docker Build & Push (GCP GAR)
+    name: 📱 Frontend Docker Build & Push (GCP GAR / GHCR)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+
       - name: Authenticate to Google Cloud
+        if: ${{ secrets.GCP_SA_KEY != '' }}
         uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
+
       - name: Set up Cloud SDK
+        if: ${{ secrets.GCP_SA_KEY != '' }}
         uses: google-github-actions/setup-gcloud@v1
+
       - name: Configure Docker for Artifact Registry
+        if: ${{ secrets.GCP_SA_KEY != '' }}
         run: gcloud auth configure-docker ${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev
+
+      - name: Log in to GitHub Container Registry (GHCR Fallback)
+        if: ${{ secrets.GCP_SA_KEY == '' }}
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build & Push Frontend Docker Image
+        env:
+          GCP_KEY: ${{ secrets.GCP_SA_KEY }}
+          GCP_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+          GCP_REG: ${{ secrets.GCP_REGION || 'us-central1' }}
         run: |
-          IMAGE_TAG="${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/finops-repo/frontend:${{ github.sha }}"
+          if [ -n "$GCP_KEY" ] && [ -n "$GCP_PROJECT" ]; then
+            IMAGE_TAG="${GCP_REG}-docker.pkg.dev/${GCP_PROJECT}/finops-repo/frontend:${{ github.sha }}"
+          else
+            REPO_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+            IMAGE_TAG="ghcr.io/${REPO_OWNER}/frontend:${{ github.sha }}"
+          fi
+          echo "Target Image Tag: ${IMAGE_TAG}"
+          echo "TARGET_IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
           docker build -t $IMAGE_TAG -f ./application/frontend/Dockerfile .
           docker push $IMAGE_TAG
+
       - name: Run Trivy Image Vulnerability Scan (Frontend)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: "${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/finops-repo/frontend:${{ github.sha }}"
+          image-ref: ${{ env.TARGET_IMAGE_TAG }}
           format: 'table'
           severity: 'CRITICAL,HIGH'
           exit-code: '0'
@@ -141,28 +190,55 @@ jobs:
   # 6. UI_Script Provisioner Docker Build & Push (Parallel)
   ################################################################################
   ui-script-build:
-    name: 🚀 UI_Script Provisioner Docker Build & Push (GCP GAR)
+    name: 🚀 UI_Script Provisioner Docker Build & Push (GCP GAR / GHCR)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+
       - name: Authenticate to Google Cloud
+        if: ${{ secrets.GCP_SA_KEY != '' }}
         uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
+
       - name: Set up Cloud SDK
+        if: ${{ secrets.GCP_SA_KEY != '' }}
         uses: google-github-actions/setup-gcloud@v1
+
       - name: Configure Docker for Artifact Registry
+        if: ${{ secrets.GCP_SA_KEY != '' }}
         run: gcloud auth configure-docker ${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev
+
+      - name: Log in to GitHub Container Registry (GHCR Fallback)
+        if: ${{ secrets.GCP_SA_KEY == '' }}
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build & Push UI_Script Provisioner Docker Image
+        env:
+          GCP_KEY: ${{ secrets.GCP_SA_KEY }}
+          GCP_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+          GCP_REG: ${{ secrets.GCP_REGION || 'us-central1' }}
         run: |
-          IMAGE_TAG="${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/finops-repo/ui_script:${{ github.sha }}"
+          if [ -n "$GCP_KEY" ] && [ -n "$GCP_PROJECT" ]; then
+            IMAGE_TAG="${GCP_REG}-docker.pkg.dev/${GCP_PROJECT}/finops-repo/ui_script:${{ github.sha }}"
+          else
+            REPO_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+            IMAGE_TAG="ghcr.io/${REPO_OWNER}/ui_script:${{ github.sha }}"
+          fi
+          echo "Target Image Tag: ${IMAGE_TAG}"
+          echo "TARGET_IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
           docker build -t $IMAGE_TAG -f ./application/UI_Script/Dockerfile .
           docker push $IMAGE_TAG
+
       - name: Run Trivy Image Vulnerability Scan (UI_Script)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: "${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/finops-repo/ui_script:${{ github.sha }}"
+          image-ref: ${{ env.TARGET_IMAGE_TAG }}
           format: 'table'
           severity: 'CRITICAL,HIGH'
           exit-code: '0'
