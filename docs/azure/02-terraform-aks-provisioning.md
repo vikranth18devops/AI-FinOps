@@ -11,7 +11,7 @@ In this step, you will setup the Azure Blob Storage remote state backend inside 
 
 The Terraform workflow provisions:
 1. **Azure Storage Account & Blob Container**: Stores remote state (`azure.aks.tfstate`) inside **`finops-global-rg`**.
-2. **Azure Resource Group**: `finops-azure-rg` in `eastus`.
+2. **Azure Resource Group**: `finops-global-rg` in `westeurope`.
 3. **Virtual Network (VNet)** (`10.0.0.0/16`) and **Subnet** (`10.0.1.0/24`).
 4. **Azure Kubernetes Service (AKS)** cluster (`finops-aks-cluster`) with defined node pool:
    - **Worker VM Size**: `Standard_D4s_v5` (4 vCPU, 16 GB RAM)

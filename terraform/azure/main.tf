@@ -21,29 +21,23 @@ provider "azurerm" {
   features {}
 }
 
-resource "azurerm_resource_group" "rg" {
-  name     = var.resource_group_name
-  location = var.location
-  tags = {
-    Environment = var.environment
-    ManagedBy   = "Terraform"
-    Project     = "AI Cloud Cost Detective"
-  }
+data "azurerm_resource_group" "rg" {
+  name = var.resource_group_name
 }
 
 # Module 1: Networking (VNet & Subnet)
 module "networking" {
   source              = "./modules/networking"
-  resource_group_name = azurerm_resource_group.rg.name
-  location            = azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.rg.location
 }
 
 # Module 2: AKS Kubernetes Cluster
 module "aks" {
   source              = "./modules/aks"
   cluster_name        = var.aks_cluster_name
-  resource_group_name = azurerm_resource_group.rg.name
-  location            = azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.rg.location
   subnet_id           = module.networking.subnet_id
   node_count          = var.aks_node_count
   node_vm_size        = var.aks_node_vm_size

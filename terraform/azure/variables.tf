@@ -1,12 +1,12 @@
 variable "resource_group_name" {
   type        = string
-  default     = "finops-azure-rg"
+  default     = "finops-global-rg"
   description = "Azure Resource Group name"
 }
 
 variable "location" {
   type        = string
-  default     = "eastus"
+  default     = "westeurope"
   description = "Azure Region location"
 }
 
