@@ -10,7 +10,7 @@ terraform {
   # Azure Remote Backend State Storage
   backend "azurerm" {
     resource_group_name  = "finops-global-rg"
-    storage_account_name = "tfstatefinops23662"
+    storage_account_name = "tfstatefinops29110"
     container_name       = "tfstate"
     key                  = "azure.aks.tfstate"
   }
