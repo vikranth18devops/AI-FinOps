@@ -153,3 +153,6 @@ az acr credential show --name $ACR_NAME --query passwords[0].value -o tsv
 ---
 
 Next Step: **[02-Terraform AKS Provisioning](02-terraform-aks-provisioning.md)**
+
+Vikranth Sunkarpally
+
