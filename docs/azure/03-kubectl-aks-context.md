@@ -10,6 +10,11 @@ After provisioning the AKS cluster with Terraform, you must fetch cluster creden
 Execute `az aks get-credentials` to download kubeconfig cluster certificates and merge them into `~/.kube/config`:
 
 ```bash
+# 1. Export Resource Group & AKS Cluster Name
+export AZURE_RG="finops-global-rg"
+export AKS_CLUSTER_NAME="finops-aks-cluster"
+
+# 2. Download Kubeconfig Credentials
 az aks get-credentials \
   --resource-group "$AZURE_RG" \
   --name "$AKS_CLUSTER_NAME" \
