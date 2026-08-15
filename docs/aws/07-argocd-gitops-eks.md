@@ -103,15 +103,18 @@ EOF
 
 ### Get ArgoCD Initial Admin Credentials
 ```bash
-# 1. Fetch Traefik LoadBalancer Hostname
-export TRAEFIK_HOST=$(kubectl get svc -n ingress-traefik traefik -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+# 1. Fetch Traefik Public LoadBalancer Hostname (or IP)
+export TRAEFIK_IP=$(kubectl get svc -n ingress-traefik traefik -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+if [ -z "$TRAEFIK_IP" ]; then
+  export TRAEFIK_IP=$(kubectl get svc -n ingress-traefik traefik -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+fi
 
 # 2. Retrieve initial admin password
 export ARGOCD_PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d)
 
 echo "================================================================="
 echo "  ✓ ArgoCD Exposed Successfully!"
-echo "  • Access URL: http://${TRAEFIK_HOST}/argocd/"
+echo "  • Access URL: http://${TRAEFIK_IP}/argocd/"
 echo "  • Username:   admin"
 echo "  • Password:   ${ARGOCD_PASSWORD}"
 echo "================================================================="
