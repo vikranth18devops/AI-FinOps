@@ -14,9 +14,9 @@ The Terraform workflow provisions:
 2. **Azure Resource Group**: `finops-global-rg` in `westeurope`.
 3. **Virtual Network (VNet)** (`10.0.0.0/16`) and **Subnet** (`10.0.1.0/24`).
 4. **Azure Kubernetes Service (AKS)** cluster (`finops-aks-cluster`) with defined node pool:
-   - **Worker VM Size**: `Standard_D4s_v5` (4 vCPU, 16 GB RAM)
+   - **Worker VM Size**: `Standard_D2s_v5` (2 vCPU, 8 GB RAM)
    - **OS Disk Size**: `128 GB` Managed Disk
-   - **Auto-Scaling**: Enabled (`2` to `5` worker nodes)
+   - **Auto-Scaling**: Enabled (`1` to `3` worker nodes)
    - **Node Labels**: `role=worker`, `environment=production`
 
 ---

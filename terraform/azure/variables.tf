@@ -24,13 +24,13 @@ variable "aks_cluster_name" {
 
 variable "aks_node_count" {
   type        = number
-  default     = 3
+  default     = 2
   description = "Initial worker node count"
 }
 
 variable "aks_node_vm_size" {
   type        = string
-  default     = "Standard_D4s_v5"
+  default     = "Standard_D2s_v5"
   description = "Azure VM Instance SKU for AKS worker nodes"
 }
 
@@ -48,12 +48,12 @@ variable "aks_enable_auto_scaling" {
 
 variable "aks_min_node_count" {
   type        = number
-  default     = 2
+  default     = 1
   description = "Minimum node count for auto-scaling"
 }
 
 variable "aks_max_node_count" {
   type        = number
-  default     = 5
+  default     = 3
   description = "Maximum node count for auto-scaling"
 }
