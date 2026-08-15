@@ -16,8 +16,10 @@ Deploy the 3 application microservices (**React Frontend**, **FastAPI Backend**,
 ## ⚡ Deployment Commands
 
 ```bash
-# 1. (Optional) Cleanup manual PostgreSQL resources if created standalone in step 05
-kubectl delete secret postgres-secret service postgres-service statefulset postgres -n finops --ignore-not-found
+# 1. Clean up pre-existing standalone PostgreSQL resources from Step 05 so Helm can manage them
+kubectl delete secret postgres-secret -n finops --ignore-not-found
+kubectl delete service postgres-service -n finops --ignore-not-found
+kubectl delete statefulset postgres -n finops --ignore-not-found
 
 # 2. Deploy full FinOps Application Stack with HPA Autoscaling
 helm upgrade --install finops ./chart \
