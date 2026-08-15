@@ -101,6 +101,10 @@ terraform init \
     -backend-config="key=azure.aks.tfstate"
 ```
 
+> [!TIP]
+> **Switching Storage Accounts or Re-creating State Buckets**:
+> If you changed your `$STORAGE_ACCOUNT_NAME` or re-created the Azure storage account, run **`terraform init -reconfigure`** to point Terraform to the new backend without attempting to migrate state from the old missing storage account.
+
 ### 3. Review Infrastructure Execution Plan
 Inspect the resources Terraform will create:
 ```bash
