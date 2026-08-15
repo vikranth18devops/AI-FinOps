@@ -465,3 +465,94 @@ kubectl exec -i -n finops postgres-0 -- \
   pg_restore -U finopsadmin -d cloud_cost_db --clean < ./cloud_cost_db_backup.dump
 ```
 
+---
+
+### 6. 👤 User Account Creation & Management Scripts
+
+```bash
+# ─── 6.1 Create a New Engineer Account Manually ────────────────────
+kubectl exec -n finops postgres-0 -- \
+  psql -U finopsadmin -d cloud_cost_db \
+  -c "INSERT INTO users (email, password_hash) 
+      VALUES ('lead.engineer@company.com', '\$2b\$12\$e8a5bZ...bcrypt_hash_here...') 
+      RETURNING id, email, created_at;"
+
+# ─── 6.2 Update an Existing User's Password Hash ──────────────────
+kubectl exec -n finops postgres-0 -- \
+  psql -U finopsadmin -d cloud_cost_db \
+  -c "UPDATE users 
+      SET password_hash = '\$2b\$12\$new_updated_hash...' 
+      WHERE email = 'lead.engineer@company.com';"
+
+# ─── 6.3 Delete a User Account ────────────────────────────────────
+kubectl exec -n finops postgres-0 -- \
+  psql -U finopsadmin -d cloud_cost_db \
+  -c "DELETE FROM users WHERE email = 'lead.engineer@company.com';"
+```
+
+---
+
+### 7. 📋 Comprehensive User Listing & Cross-Table Activity Scripts
+
+```bash
+# ─── 7.1 Formatted List of All Users ─────────────────────────────
+kubectl exec -n finops postgres-0 -- \
+  psql -U finopsadmin -d cloud_cost_db \
+  -c "SELECT id, email, TO_CHAR(created_at, 'YYYY-MM-DD HH24:MI:SS') AS registered_on 
+      FROM users 
+      ORDER BY id ASC;"
+
+# ─── 7.2 Search Users by Domain ──────────────────────────────────
+kubectl exec -n finops postgres-0 -- \
+  psql -U finopsadmin -d cloud_cost_db \
+  -c "SELECT id, email, created_at 
+      FROM users 
+      WHERE email LIKE '%@gmail.com' 
+      ORDER BY created_at DESC;"
+
+# ─── 7.3 User Activity Summary (Joins across Users, Analyses, and Remediations) ───
+kubectl exec -n finops postgres-0 -- \
+  psql -U finopsadmin -d cloud_cost_db \
+  -c "SELECT u.id, u.email, 
+             COUNT(DISTINCT a.id) AS scans_run, 
+             COUNT(DISTINCT s.id) AS active_schedules, 
+             COUNT(DISTINCT r.id) AS fixes_executed 
+      FROM users u 
+      LEFT JOIN analyses a ON a.user_id = u.id 
+      LEFT JOIN schedules s ON s.user_id = u.id 
+      LEFT JOIN remediations r ON r.user_id = u.id 
+      GROUP BY u.id, u.email 
+      ORDER BY u.id ASC;"
+```
+
+---
+
+### 8. 🛠️ Full Data Lifecycle CRUD Operations Suite
+
+```bash
+# ─── 8.1 Insert a Manual Audit Schedule ───────────────────────────
+kubectl exec -n finops postgres-0 -- \
+  psql -U finopsadmin -d cloud_cost_db \
+  -c "INSERT INTO schedules (id, user_id, resource_group, frequency, alert_email, status, next_run) 
+      VALUES ('sched-manual-01', 1, 'finops-global-rg', 'weekly', 'admin@vikranth18devops.in', 'active', NOW() + INTERVAL '7 days') 
+      RETURNING id, resource_group, frequency, status;"
+
+# ─── 8.2 Toggle Schedule Status (Active <-> Paused) ───────────────
+kubectl exec -n finops postgres-0 -- \
+  psql -U finopsadmin -d cloud_cost_db \
+  -c "UPDATE schedules SET status = 'paused' WHERE id = 'sched-manual-01';"
+
+# ─── 8.3 Insert a Manual Remediation Record ───────────────────────
+kubectl exec -n finops postgres-0 -- \
+  psql -U finopsadmin -d cloud_cost_db \
+  -c "INSERT INTO remediations (id, user_id, user_email, resource_group, command, status, estimated_savings, output) 
+      VALUES ('rem-manual-99', 1, 'vikranth.devops18@gmail.com', 'finops-global-rg', 'az disk delete -g finops-global-rg -n unattached-disk-01 --yes', 'SUCCESS', '\$95.00/month', '[✓] SUCCESS: Unattached disk deleted successfully.') 
+      RETURNING id, status, estimated_savings;"
+
+# ─── 8.4 Clean Up Analyses Older Than 30 Days ─────────────────────
+kubectl exec -n finops postgres-0 -- \
+  psql -U finopsadmin -d cloud_cost_db \
+  -c "DELETE FROM analyses WHERE created_at < NOW() - INTERVAL '30 days';"
+```
+
+
