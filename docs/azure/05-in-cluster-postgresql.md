@@ -26,7 +26,11 @@ Running the database in-cluster eliminates external cloud database fees (saving 
 Apply the in-cluster PostgreSQL StatefulSet, Secret, and Service manifests:
 
 ```bash
-helm template finops chart/ --show-only templates/postgres-statefulset.yaml | kubectl apply -f -
+# 1. Return to repository root directory
+cd /Users/aarvik/Documents/123
+
+# 2. Render and apply PostgreSQL StatefulSet, Secret, and Service
+helm template finops ./chart --show-only templates/postgres-statefulset.yaml | kubectl apply -f -
 ```
 
 ---

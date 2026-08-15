@@ -8,7 +8,11 @@ Deploy the in-cluster **PostgreSQL database** (`postgres:15-alpine`) as a **Stat
 ## ⚡ Deployment Commands
 
 ```bash
-helm template finops chart/ --show-only templates/postgres-statefulset.yaml | kubectl apply -f -
+# 1. Return to repository root directory
+cd /Users/aarvik/Documents/123
+
+# 2. Render and apply PostgreSQL StatefulSet, Secret, and Service
+helm template finops ./chart --show-only templates/postgres-statefulset.yaml | kubectl apply -f -
 ```
 
 ---
