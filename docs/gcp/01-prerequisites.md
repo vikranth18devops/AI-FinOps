@@ -7,11 +7,6 @@
   <img src="https://img.shields.io/badge/Terraform-IaC-7B42BC?style=for-the-badge&logo=terraform&logoColor=white" />
 </p>
 
-> [!IMPORTANT]
-> **GCP Billing Requirement**: Ensure billing is enabled on your GCP project before creating Artifact Registry repositories or GKE clusters. You can enable billing at: `https://console.developers.google.com/billing/enable?project=YOUR_PROJECT_ID`
-
----
-
 ## 📌 Local CLI Tools Installation Guide (macOS, Linux, Windows)
 
 To execute GCP provisioner scripts (`create_gcp_resources.sh`), manage GKE Kubernetes clusters, and run local microservices (`./start_local.sh`), install the following local CLI tools:
@@ -146,8 +141,7 @@ Run the following command in your terminal to get your active Google Cloud Proje
 ```bash
 gcloud config get-value project
 ```
-*Example Output*: `project-ca7436f0-33ea-4575-ada`
-
+project-ca7436f0-33ea-4575-ada
 ---
 
 ### 2️⃣ Obtain `GCP_REGION`
@@ -167,7 +161,7 @@ export PROJECT_ID=$(gcloud config get-value project)
 # 2. Enable Artifact Registry API
 gcloud services enable artifactregistry.googleapis.com container.googleapis.com
 
-# 3. Create Artifact Registry Repository (Ensure billing is enabled)
+# 3. Create Artifact Registry Repository
 gcloud artifacts repositories create finops-repo \
     --repository-format=docker \
     --location=us-central1 \
@@ -201,11 +195,11 @@ cat gcp-key.json
 2. Navigate to **Settings** > **Secrets and variables** > **Actions**.
 3. Click **New repository secret** and add each secret:
 
-| Secret Name | How to Get Value | Example Output Value |
-| :--- | :--- | :--- |
-| **`GCP_PROJECT_ID`** | Run `gcloud config get-value project` | `project-ca7436f0-33ea-4575-ada` |
-| **`GCP_REGION`** | Preferred GCP Region | `us-central1` |
-| **`GCP_SA_KEY`** | Output of `cat gcp-key.json` | `{ "type": "service_account", ... }` |
+| Secret Name | Value to Paste |
+| :--- | :--- |
+| **`GCP_PROJECT_ID`** | Output of `gcloud config get-value project` |
+| **`GCP_REGION`** | `us-central1` (or your GCP region) |
+| **`GCP_SA_KEY`** | Full raw JSON content from `cat gcp-key.json` |
 
 4. Clean up local key file for security:
 ```bash
