@@ -34,6 +34,7 @@ app.add_middleware(
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 APP_DIR = os.path.dirname(BASE_DIR)
 WORKSPACE_ROOT = os.path.dirname(APP_DIR)
+PARENT_DIR = WORKSPACE_ROOT
 SCRIPTS_DIR = os.path.join(WORKSPACE_ROOT, "script_to_create_Az")
 
 AZURE_SCRIPT = os.path.join(SCRIPTS_DIR, "create_azure_resources.sh")
