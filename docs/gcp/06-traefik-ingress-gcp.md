@@ -17,9 +17,22 @@ Traefik routes traffic to all three application microservices in the `finops` na
 ## ⚡ Deployment Commands
 
 ```bash
-helm repo add traefik https://traefik.github.io/charts
+# 1. Add Traefik Helm repository
+helm repo add traefik https://traefik.github.io/charts --force-update
 helm repo update
-helm install traefik traefik/traefik -n traefik --create-namespace
+
+# 2. Deploy Traefik Ingress Controller in namespace ingress-traefik
+helm upgrade --install traefik traefik/traefik \
+  --namespace ingress-traefik --create-namespace \
+  --wait
+```
+
+---
+
+## 🔍 Fetch GCP External LoadBalancer Public IP
+
+```bash
+kubectl get svc -n ingress-traefik traefik
 ```
 
 ---
