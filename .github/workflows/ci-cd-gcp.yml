@@ -78,26 +78,28 @@ jobs:
   backend-build:
     name: 🐳 Backend Docker Build & Push (GCP GAR / GHCR)
     runs-on: ubuntu-latest
+    env:
+      GCP_KEY: ${{ secrets.GCP_SA_KEY }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
       - name: Authenticate to Google Cloud
-        if: ${{ secrets.GCP_SA_KEY != '' }}
+        if: ${{ env.GCP_KEY != '' }}
         uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Set up Cloud SDK
-        if: ${{ secrets.GCP_SA_KEY != '' }}
+        if: ${{ env.GCP_KEY != '' }}
         uses: google-github-actions/setup-gcloud@v1
 
       - name: Configure Docker for Artifact Registry
-        if: ${{ secrets.GCP_SA_KEY != '' }}
+        if: ${{ env.GCP_KEY != '' }}
         run: gcloud auth configure-docker ${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev
 
       - name: Log in to GitHub Container Registry (GHCR Fallback)
-        if: ${{ secrets.GCP_SA_KEY == '' }}
+        if: ${{ env.GCP_KEY == '' }}
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
@@ -106,7 +108,6 @@ jobs:
 
       - name: Build & Push Backend Docker Image
         env:
-          GCP_KEY: ${{ secrets.GCP_SA_KEY }}
           GCP_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
           GCP_REG: ${{ secrets.GCP_REGION || 'us-central1' }}
         run: |
@@ -135,26 +136,28 @@ jobs:
   frontend-build:
     name: 📱 Frontend Docker Build & Push (GCP GAR / GHCR)
     runs-on: ubuntu-latest
+    env:
+      GCP_KEY: ${{ secrets.GCP_SA_KEY }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
       - name: Authenticate to Google Cloud
-        if: ${{ secrets.GCP_SA_KEY != '' }}
+        if: ${{ env.GCP_KEY != '' }}
         uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Set up Cloud SDK
-        if: ${{ secrets.GCP_SA_KEY != '' }}
+        if: ${{ env.GCP_KEY != '' }}
         uses: google-github-actions/setup-gcloud@v1
 
       - name: Configure Docker for Artifact Registry
-        if: ${{ secrets.GCP_SA_KEY != '' }}
+        if: ${{ env.GCP_KEY != '' }}
         run: gcloud auth configure-docker ${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev
 
       - name: Log in to GitHub Container Registry (GHCR Fallback)
-        if: ${{ secrets.GCP_SA_KEY == '' }}
+        if: ${{ env.GCP_KEY == '' }}
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
@@ -163,7 +166,6 @@ jobs:
 
       - name: Build & Push Frontend Docker Image
         env:
-          GCP_KEY: ${{ secrets.GCP_SA_KEY }}
           GCP_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
           GCP_REG: ${{ secrets.GCP_REGION || 'us-central1' }}
         run: |
@@ -192,26 +194,28 @@ jobs:
   ui-script-build:
     name: 🚀 UI_Script Provisioner Docker Build & Push (GCP GAR / GHCR)
     runs-on: ubuntu-latest
+    env:
+      GCP_KEY: ${{ secrets.GCP_SA_KEY }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
       - name: Authenticate to Google Cloud
-        if: ${{ secrets.GCP_SA_KEY != '' }}
+        if: ${{ env.GCP_KEY != '' }}
         uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Set up Cloud SDK
-        if: ${{ secrets.GCP_SA_KEY != '' }}
+        if: ${{ env.GCP_KEY != '' }}
         uses: google-github-actions/setup-gcloud@v1
 
       - name: Configure Docker for Artifact Registry
-        if: ${{ secrets.GCP_SA_KEY != '' }}
+        if: ${{ env.GCP_KEY != '' }}
         run: gcloud auth configure-docker ${{ secrets.GCP_REGION || 'us-central1' }}-docker.pkg.dev
 
       - name: Log in to GitHub Container Registry (GHCR Fallback)
-        if: ${{ secrets.GCP_SA_KEY == '' }}
+        if: ${{ env.GCP_KEY == '' }}
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
@@ -220,7 +224,6 @@ jobs:
 
       - name: Build & Push UI_Script Provisioner Docker Image
         env:
-          GCP_KEY: ${{ secrets.GCP_SA_KEY }}
           GCP_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
           GCP_REG: ${{ secrets.GCP_REGION || 'us-central1' }}
         run: |
