@@ -2,7 +2,7 @@
 
 # ==============================================================================
 # Web UI Site Launcher Script for UI_Script
-# Starts the Azure Provisioning Web Portal Server on http://localhost:8500
+# Starts the Azure Provisioning Web Portal Server on http://localhost:8585
 # ==============================================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

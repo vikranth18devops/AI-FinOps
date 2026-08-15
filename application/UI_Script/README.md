@@ -4,7 +4,7 @@
   <img src="https://img.shields.io/badge/Provider-Azure-0089D6?style=for-the-badge&logo=microsoft-azure&logoColor=white" />
   <img src="https://img.shields.io/badge/Provider-AWS-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" />
   <img src="https://img.shields.io/badge/Provider-GCP-4285F4?style=for-the-badge&logo=google-cloud&logoColor=white" />
-  <img src="https://img.shields.io/badge/FastAPI-Port_8500-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
+  <img src="https://img.shields.io/badge/FastAPI-Port_8585-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
 </p>
 
 An interactive, multi-cloud Web UI Studio located in `application/UI_Script` that allows users to select cloud providers (**Azure**, **AWS**, **GCP**), pick live regions, configure dynamic environments (`dev`, `qa`, `prd`, `stg`, `uat`), trigger live 12-resource per-environment provisioning, stream real-time percentage progress bars, and terminate running provisioner processes on demand.
@@ -44,4 +44,4 @@ cd application/UI_Script
 python3 main.py
 ```
 
-Open your browser at **`http://localhost:8500`** (or **`https://vikranthsunkarpally.in/studio`** in production).
+Open your browser at **`http://localhost:8585`** (or **`https://vikranthsunkarpally.in/studio`** in production).

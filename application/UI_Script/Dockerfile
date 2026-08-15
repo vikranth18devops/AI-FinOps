@@ -25,7 +25,7 @@ COPY script_to_create_Az /app/script_to_create_Az
 # Grant execution permissions
 RUN chmod +x /app/script_to_create_Az/*.sh /app/application/UI_Script/*.sh
 
-EXPOSE 8500
+EXPOSE 8585
 
 WORKDIR /app/application/UI_Script
 CMD ["python", "server.py"]

@@ -199,7 +199,7 @@ spec:
               service:
                 name: finops-ui-script-service
                 port:
-                  number: 8500
+                  number: 8585
           - path: /
             pathType: Prefix
             backend:

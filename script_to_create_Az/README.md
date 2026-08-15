@@ -32,7 +32,7 @@ Automated, idempotent Azure CLI script to provision **12 dedicated Azure resourc
 ---
 
 ### Web UI Studio (`application/UI_Script`)
-- Access the zero-scroll Web UI Portal at **[http://localhost:8500](http://localhost:8500)**.
+- Access the zero-scroll Web UI Portal at **[http://localhost:8585](http://localhost:8585)**.
 - To launch locally: `cd application/UI_Script && ./start_ui.sh` or run `./start_local.sh` from the workspace root.
 
 ---

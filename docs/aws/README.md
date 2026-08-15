@@ -26,7 +26,7 @@ This directory contains the step-by-step execution guides for provisioning, conf
 
 1. **React Frontend Dashboard (`application/frontend`)**: Port `5173`
 2. **FastAPI Backend API (`application/backend`)**: Port `8000`
-3. **UI_Script Provisioner Studio (`application/UI_Script`)**: Port `8500`
+3. **UI_Script Provisioner Studio (`application/UI_Script`)**: Port `8585`
 
 ---
 
@@ -39,4 +39,4 @@ Launch the entire 3-service stack simultaneously from workspace root:
 
 - **Backend API**: `http://localhost:8000`
 - **Frontend Dashboard**: `http://localhost:5173`
-- **UI_Script Provisioner**: `http://localhost:8500`
+- **UI_Script Provisioner**: `http://localhost:8585`

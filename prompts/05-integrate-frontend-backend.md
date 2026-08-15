@@ -23,7 +23,7 @@ Wire up the React frontend, FastAPI backend, UI_Script Provisioner Studio, in-cl
 - Backend runs fix via `subprocess`, records execution in `remediations` table, and returns instant success confirmation.
 
 ### 4. Provisioner Studio Modal
-- Connect UI_Script Studio (`http://localhost:8500`) to launch 12-resource per-environment stacks across Azure, AWS, and GCP.
+- Connect UI_Script Studio (`http://localhost:8585`) to launch 12-resource per-environment stacks across Azure, AWS, and GCP.
 - Enable live progress streaming and support the **`⛔ Cancel Execution`** button (`POST /api/provision/cancel`).
 
 ---
