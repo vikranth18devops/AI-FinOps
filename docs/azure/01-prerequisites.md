@@ -107,7 +107,7 @@ Run the following terminal commands:
 # Set environment variables
 export RG_NAME="finops-global-rg"
 export ACR_NAME="finopsacr2026$RANDOM"
-export LOCATION="westeurope"
+export LOCATION="eastus"
 
 # 1. Create Azure Resource Group
 az group create --name $RG_NAME --location $LOCATION

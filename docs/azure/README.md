@@ -29,7 +29,7 @@ Launch the entire 3-service stack simultaneously from workspace root:
 
 The platform includes an automated Azure resource provisioner script:
 ```bash
-./script_to_create_Az/create_azure_resources.sh --envs dev,qa,prd snapthreadz westeurope
+./script_to_create_Az/create_azure_resources.sh --envs dev,qa,prd snapthreadz eastus
 ```
 
 Provisions 12 resources per environment in Azure:
