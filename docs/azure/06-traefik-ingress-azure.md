@@ -15,7 +15,6 @@ helm repo update
 # 2. Deploy Traefik in namespace ingress-traefik
 helm upgrade --install traefik traefik/traefik \
   --namespace ingress-traefik --create-namespace \
-  --set ports.web.redirectTo=websecure \
   --wait
 ```
 
