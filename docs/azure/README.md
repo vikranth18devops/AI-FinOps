@@ -1,6 +1,23 @@
 # 📘 Azure AKS Deployment & FinOps Operations Guide
 
-This guide details the complete deployment, operations, and FinOps scanning pipeline for **Azure AKS (Azure Kubernetes Service)**.
+This directory contains the step-by-step execution guides for provisioning, configuring, and operating the AI-Powered Cloud Cost Optimization Platform on **Azure Kubernetes Service (AKS)**.
+
+---
+
+## 🗺️ Step-by-Step Documentation Index
+
+1. **[01 - Prerequisites & Tooling Setup](01-prerequisites.md)**: Install Azure CLI, Terraform, Helm, kubectl, and configure ACR credentials.
+2. **[02 - Terraform AKS Provisioning](02-terraform-aks-provisioning.md)**: Setup remote state backend inside `finops-global-rg` (`eastus`) and provision AKS cluster with VNet.
+3. **[03 - kubectl AKS Context Configuration](03-kubectl-aks-context.md)**: Configure `kubectl` cluster credentials and verify cluster nodes.
+4. **[04 - Namespaces & RBAC Setup](04-namespaces-and-rbac.md)**: Create `finops`, `ingress-traefik`, `observability`, and `argocd` namespaces with RBAC roles.
+5. **[05 - Deploy In-Cluster PostgreSQL StatefulSet](05-in-cluster-postgresql.md)**: Deploy local PostgreSQL database (`postgres:15-alpine`) with 10Gi PVC storage.
+6. **[06 - Traefik Ingress Setup on AKS](06-traefik-ingress-azure.md)**: Deploy Traefik v3 Ingress LoadBalancer and fetch Public IP.
+7. **[07 - Helm Application Deployment & HPA Setup](07-helm-app-deployment-aks.md)**: Deploy the 3 microservices with HorizontalPodAutoscaler (HPA).
+8. **[08 - ArgoCD GitOps Continuous Deployment Setup](08-argocd-gitops-aks.md)**: Configure automated GitOps synchronization via ArgoCD on AKS.
+9. **[09 - Observability Stack on AKS](09-observability-azure.md)**: Deploy Prometheus Operator, Grafana dashboards, and Loki log aggregator.
+10. **[10 - PostgreSQL Validation & Connection Testing](10-postgresql-validation-azure.md)**: Validate database schema, active remediations, and inter-pod connectivity.
+11. **[11 - GitHub Actions CI/CD Pipeline Setup](11-github-actions-ci-cd-azure.md)**: Configure automated ACR image building and GitOps version bumping.
+12. **[12 - One-Click Azure Deployment Script](12-one-click-azure-deploy.md)**: One-command automated cluster deployment and teardown guide.
 
 ---
 
@@ -25,53 +42,14 @@ Launch the entire 3-service stack simultaneously from workspace root:
 
 ---
 
-## 🛠️ Azure Infrastructure Provisioner
+## 🛠️ Azure Infrastructure Provisioner Script
 
 The platform includes an automated Azure resource provisioner script:
 ```bash
 ./script_to_create_Az/create_azure_resources.sh --envs dev,qa,prd snapthreadz eastus
 ```
 
-Provisions 12 resources per environment in Azure:
-1. Virtual Network (VNet)
-2. App Subnet
-3. Database Subnet
-4. Network Security Group (NSG)
-5. Ubuntu Virtual Machine (Standard_B1s)
-6. Storage Account (StorageV2)
-7. Blob Storage Container
-8. Log Analytics Workspace
-9. App Service Plan (B1)
-10. Web App Service (Python 3.11)
-11. Azure Key Vault
-12. Public IP Address
-
 To tear down all resources:
 ```bash
 ./script_to_create_Az/create_azure_resources.sh --destroy --envs dev,qa,prd snapthreadz eastus
 ```
-
----
-
-## 🐳 Dockerization & Kubernetes Deployment
-
-- **UI_Script Dockerfile**: `application/UI_Script/Dockerfile`
-- **Backend Dockerfile**: `application/backend/Dockerfile`
-- **Frontend Dockerfile**: `application/frontend/Dockerfile`
-
-### Helm Chart Deployment
-```bash
-helm upgrade --install finops ./chart \
-  --namespace finops \
-  --create-namespace \
-  --set image.repository=myregistry.azurecr.io/finops \
-  --set service.uiScriptPort=8500
-```
-
----
-
-## 🔄 CI/CD & GitOps Integration
-
-- **GitHub Actions Pipeline**: `.github/workflows/ci-cd.yml` builds and pushes `backend`, `frontend`, and `ui_script` Docker images.
-- **ArgoCD Application**: `argocd/application.yaml` continuously syncs `chart/` manifests to Azure AKS.
-- **Prometheus Monitoring**: `chart/monitoring/servicemonitor-ui-script.yaml` monitors `ui_script` metrics on port `8500`.

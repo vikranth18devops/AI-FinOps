@@ -1,4 +1,4 @@
-# 11 - In-Cluster PostgreSQL StatefulSet Validation Guide (Azure AKS)
+# 10 - In-Cluster PostgreSQL StatefulSet Validation Guide (Azure AKS)
 
 ## 📌 Step Overview
 This step covers validating database connectivity, schema creation, persistent volume storage integrity, and live record querying for the in-cluster **PostgreSQL StatefulSet** (`postgres-0`) running on **Azure AKS**.
@@ -73,3 +73,7 @@ asyncio.run(test_db())
 - [x] PVC `postgres-data-postgres-0` is `Bound` to Azure Managed Disk (`managed-csi`).
 - [x] DNS hostname `postgres-service.finops.svc.cluster.local:5432` resolves cleanly.
 - [x] `remediations` audit table contains active historical records.
+
+---
+
+Next Step: **[11-GitHub Actions CI/CD Pipeline Setup](11-github-actions-ci-cd-azure.md)**

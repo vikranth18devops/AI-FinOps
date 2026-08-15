@@ -57,4 +57,4 @@ kubectl get ingress -n finops
 
 ---
 
-Next Step: **[08-Observability Stack on AKS](08-observability-azure.md)**
+Next Step: **[08-ArgoCD GitOps Continuous Deployment](08-argocd-gitops-aks.md)**
