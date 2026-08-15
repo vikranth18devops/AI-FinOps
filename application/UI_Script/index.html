@@ -431,12 +431,14 @@
 
     async function triggerLogin() {
       const consoleBox = document.getElementById('outputConsole');
-      consoleBox.innerHTML = `<div class="text-cyan-300 font-bold log-line">[$] Triggering ${currentProvider.toUpperCase()} CLI Authentication...</div>`;
+      consoleBox.innerHTML = `<div class="text-cyan-300 font-bold log-line">[$] Initiating ${currentProvider.toUpperCase()} Authentication...</div>`;
       try {
         const res = await fetch(`/api/auth/login?provider=${currentProvider}`, { method: 'POST' });
         const data = await res.json();
-        consoleBox.innerHTML += `<div class="text-slate-300 log-line">${data.output || 'Login complete.'}</div>`;
-        checkAuthStatus();
+        let rawOut = data.output || 'Login complete.';
+        let formattedOutput = rawOut.replace(/(https:\/\/microsoft\.com\/devicelogin)/g, '<a href="$1" target="_blank" class="text-yellow-300 underline font-bold animate-pulse">$1</a>');
+        consoleBox.innerHTML += `<div class="text-emerald-300 font-bold log-line border-l-2 border-emerald-500 pl-2 my-2">${formattedOutput}</div>`;
+        setTimeout(checkAuthStatus, 5000);
       } catch (err) {
         consoleBox.innerHTML += `<div class="text-rose-400 font-bold log-line">[✗] Login error: ${err.message}</div>`;
       }
