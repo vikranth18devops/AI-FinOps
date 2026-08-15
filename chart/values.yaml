@@ -55,3 +55,4 @@ env:
   # In-cluster Kubernetes PostgreSQL connection string
   DATABASE_URL: "postgresql://finopsadmin:SecretPass123!@postgres-service.finops.svc.cluster.local:5432/cloud_cost_db"
   JWT_SECRET: "super_secure_jwt_secret_key_2026"
+  AZURE_SUBSCRIPTION_ID: "afa17bb6-6630-4872-8141-2a62d46e3053"

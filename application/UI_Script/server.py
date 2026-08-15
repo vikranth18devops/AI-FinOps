@@ -162,6 +162,63 @@ async def get_provider_regions(provider: str = Query("azure")):
     }
 
 
+@app.on_event("startup")
+async def auto_cloud_login():
+    """Attempts automatic authentication for Azure on server boot."""
+    client_id = os.getenv("AZURE_CLIENT_ID")
+    client_secret = os.getenv("AZURE_CLIENT_SECRET")
+    tenant_id = os.getenv("AZURE_TENANT_ID")
+    sub_id = os.getenv("AZURE_SUBSCRIPTION_ID")
+
+    # 1. Try Azure Service Principal login if env vars present
+    if client_id and client_secret and tenant_id:
+        try:
+            logger.info("Attempting automatic Azure Service Principal login...")
+            res = subprocess.run(["az", "login", "--service-principal", "-u", client_id, "-p", client_secret, "--tenant", tenant_id], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=15)
+            if res.returncode == 0:
+                logger.info("✓ Azure Service Principal login successful!")
+                if sub_id:
+                    subprocess.run(["az", "account", "set", "--subscription", sub_id])
+                return
+        except Exception as e:
+            logger.warning(f"Azure SP auto-login failed: {e}")
+
+    # 2. Try Managed Identity on AKS
+    try:
+        res = subprocess.run(["az", "login", "--identity"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=10)
+        if res.returncode == 0:
+            logger.info("✓ Azure Managed Identity login successful!")
+            if sub_id:
+                subprocess.run(["az", "account", "set", "--subscription", sub_id])
+    except Exception:
+        pass
+
+
+class AzureCredentialsPayload(BaseModel):
+    client_id: str
+    client_secret: str
+    tenant_id: str
+    subscription_id: Optional[str] = None
+
+
+@app.post("/api/auth/credentials")
+async def set_azure_credentials(payload: AzureCredentialsPayload):
+    """Logs in to Azure CLI inside container using submitted Service Principal credentials."""
+    cmd = [
+        "az", "login", "--service-principal",
+        "-u", payload.client_id.strip(),
+        "-p", payload.client_secret.strip(),
+        "--tenant", payload.tenant_id.strip()
+    ]
+    res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=30)
+    if res.returncode == 0:
+        if payload.subscription_id:
+            subprocess.run(["az", "account", "set", "--subscription", payload.subscription_id.strip()])
+        return {"status": "success", "message": "Successfully authenticated Azure CLI via Service Principal!", "output": res.stdout}
+    else:
+        return {"status": "error", "message": f"Azure CLI login failed: {res.stdout}", "output": res.stdout}
+
+
 @app.get("/api/auth/status")
 async def get_cloud_auth_status(provider: str = Query("azure")):
     """Checks current authentication state for Azure, AWS, or GCP."""

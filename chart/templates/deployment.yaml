@@ -78,5 +78,8 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.service.uiScriptPort }}
+          env:
+            - name: AZURE_SUBSCRIPTION_ID
+              value: {{ .Values.env.AZURE_SUBSCRIPTION_ID | default "afa17bb6-6630-4872-8141-2a62d46e3053" | quote }}
           resources:
             {{- toYaml .Values.resources.uiScript | nindent 12 }}
