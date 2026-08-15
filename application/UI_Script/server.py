@@ -43,6 +43,7 @@ GCP_SCRIPT = os.path.join(SCRIPTS_DIR, "create_gcp_resources.sh")
 
 # Active subprocess tracker for real-time cancellation
 active_process: Optional[subprocess.Popen] = None
+device_code_process: Optional[subprocess.Popen] = None
 
 
 class ProvisionPayload(BaseModel):
@@ -342,17 +343,38 @@ async def trigger_cloud_login(provider: str = Query("azure")):
             except Exception:
                 pass
 
-        # 3. Fallback: Trigger device code login
+        # 3. Fallback: Trigger persistent background device code login
+        global device_code_process
         try:
-            res = subprocess.run(["az", "login", "--use-device-code"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=8)
-            output = res.stdout
-        except subprocess.TimeoutExpired as e:
-            output = e.stdout or ""
+            if device_code_process and device_code_process.poll() is None:
+                device_code_process.terminate()
 
-        if not output:
-            output = "To sign in, open https://microsoft.com/devicelogin in any browser and enter the authentication code to complete Azure login."
+            device_code_process = subprocess.Popen(
+                ["az", "login", "--use-device-code"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1
+            )
 
-        return {"status": "device_code", "provider": "azure", "output": output}
+            output_lines = []
+            start_t = time.time()
+            while time.time() - start_t < 6:
+                line = device_code_process.stdout.readline()
+                if line:
+                    output_lines.append(line.strip())
+                    if "devicelogin" in line or "enter the code" in line:
+                        break
+                else:
+                    time.sleep(0.2)
+
+            output = "\n".join(output_lines)
+            if not output:
+                output = "To sign in, open https://microsoft.com/devicelogin in any browser and enter the device code."
+
+            return {"status": "device_code", "provider": "azure", "output": output}
+        except Exception as e:
+            return {"status": "error", "provider": "azure", "output": f"Device code login error: {str(e)}"}
     elif prov == "aws":
         output = run_cmd(["aws", "configure", "list"])
     elif prov == "gcp":
