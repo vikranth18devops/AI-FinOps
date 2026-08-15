@@ -219,6 +219,8 @@ class AnalyzeResponse(BaseModel):
 
 
 @app.get("/")
+@app.get("/api")
+@app.get("/api/")
 def read_root():
     return {
         "status": "online",
