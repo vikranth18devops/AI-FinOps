@@ -168,6 +168,7 @@ async def get_cloud_auth_status(provider: str = Query("azure")):
     prov = provider.lower()
 
     if prov == "azure":
+        # 1. Check existing az account show
         try:
             res = subprocess.run(["az", "account", "show"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=15)
             if res.returncode == 0 and res.stdout.strip():
@@ -181,6 +182,45 @@ async def get_cloud_auth_status(provider: str = Query("azure")):
                 }
         except Exception:
             pass
+
+        # 2. Try AKS Managed Identity auto-login
+        try:
+            res = subprocess.run(["az", "login", "--identity"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=10)
+            if res.returncode == 0:
+                show_res = subprocess.run(["az", "account", "show"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=10)
+                if show_res.returncode == 0 and show_res.stdout.strip():
+                    acc = json.loads(show_res.stdout)
+                    return {
+                        "provider": "azure",
+                        "authenticated": True,
+                        "user": acc.get("user", {}).get("name", "AKS Managed Identity"),
+                        "subscription_name": acc.get("name", "Azure Subscription"),
+                        "subscription_id": acc.get("id", "")
+                    }
+        except Exception:
+            pass
+
+        # 3. Try Service Principal env vars if available
+        client_id = os.getenv("AZURE_CLIENT_ID")
+        client_secret = os.getenv("AZURE_CLIENT_SECRET")
+        tenant_id = os.getenv("AZURE_TENANT_ID")
+        if client_id and client_secret and tenant_id:
+            try:
+                res = subprocess.run(["az", "login", "--service-principal", "-u", client_id, "-p", client_secret, "--tenant", tenant_id], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=15)
+                if res.returncode == 0:
+                    show_res = subprocess.run(["az", "account", "show"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=10)
+                    if show_res.returncode == 0:
+                        acc = json.loads(show_res.stdout)
+                        return {
+                            "provider": "azure",
+                            "authenticated": True,
+                            "user": f"Service Principal ({client_id[:8]}...)",
+                            "subscription_name": acc.get("name", "Azure Subscription"),
+                            "subscription_id": acc.get("id", "")
+                        }
+            except Exception:
+                pass
+
         return {"provider": "azure", "authenticated": False, "message": "Not logged into Azure CLI (az login)."}
 
     elif prov == "aws":
@@ -222,7 +262,22 @@ async def trigger_cloud_login(provider: str = Query("azure")):
     """Triggers login command for chosen cloud provider."""
     prov = provider.lower()
     if prov == "azure":
-        output = run_cmd(["az", "login"])
+        # 1. Try Managed Identity first
+        mi_res = subprocess.run(["az", "login", "--identity"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=10)
+        if mi_res.returncode == 0:
+            return {"status": "success", "provider": "azure", "output": "✓ Authenticated successfully via Azure Managed Identity!"}
+        
+        # 2. Try Service Principal env vars if available
+        client_id = os.getenv("AZURE_CLIENT_ID")
+        client_secret = os.getenv("AZURE_CLIENT_SECRET")
+        tenant_id = os.getenv("AZURE_TENANT_ID")
+        if client_id and client_secret and tenant_id:
+            sp_res = subprocess.run(["az", "login", "--service-principal", "-u", client_id, "-p", client_secret, "--tenant", tenant_id], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=15)
+            if sp_res.returncode == 0:
+                return {"status": "success", "provider": "azure", "output": f"✓ Authenticated successfully via Service Principal ({client_id[:8]}...)!"}
+
+        # 3. Fallback: Trigger device code login
+        output = run_cmd(["az", "login", "--use-device-code"])
     elif prov == "aws":
         output = run_cmd(["aws", "configure", "list"])
     elif prov == "gcp":
