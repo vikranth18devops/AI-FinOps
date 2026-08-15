@@ -55,4 +55,4 @@ kubectl get ingress -n finops
 
 ---
 
-Next Step: **[08-Observability Stack on AKS](08-observability-aks.md)**
+Next Step: **[08-Observability Stack on AKS](08-observability-azure.md)**
