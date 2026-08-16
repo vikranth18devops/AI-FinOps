@@ -242,18 +242,13 @@ jobs:
           fetch-depth: 0
       - name: GitOps CD Update (Bump Helm Chart Image Tags)
         run: |
-          echo "Verifying Docker builds completion before updating Helm values..."
+          echo "Updating Helm chart values with latest Docker image tags..."
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          # Only update chart values if explicitly enabled for production releases
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            sed -i 's/backendTag:.*/backendTag: "${{ github.sha }}"/' chart/values.yaml
-            sed -i 's/frontendTag:.*/frontendTag: "${{ github.sha }}"/' chart/values.yaml
-            sed -i 's/uiScriptTag:.*/uiScriptTag: "${{ github.sha }}"/' chart/values.yaml
-            git add chart/values.yaml
-            git commit -m "Azure GitOps CD: Bump image tags to ${{ github.sha }} [skip ci]" || true
-            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main || true
-          else
-            echo "Skipping automatic tag bump on standard commit to prevent ErrImagePull race condition."
-          fi
+          sed -i 's/backendTag:.*/backendTag: "${{ github.sha }}"/' chart/values.yaml
+          sed -i 's/frontendTag:.*/frontendTag: "${{ github.sha }}"/' chart/values.yaml
+          sed -i 's/uiScriptTag:.*/uiScriptTag: "${{ github.sha }}"/' chart/values.yaml
+          git add chart/values.yaml
+          git commit -m "Azure GitOps CD: Bump image tags to ${{ github.sha }} [skip ci]" || true
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main || true
 
