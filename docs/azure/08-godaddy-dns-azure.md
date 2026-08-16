@@ -91,6 +91,7 @@ Commit and push your updated chart configuration to trigger ArgoCD synchronizati
 ```bash
 git add chart/values.yaml chart/templates/traefik-ingress.yaml
 git commit -m "feat(dns): configure custom domain vikranthsunkarpally.in for Traefik Ingress"
+git pull --rebase origin main
 git push origin main
 ```
 
