@@ -688,3 +688,78 @@ async def set_active_sub(
         raise HTTPException(status_code=500, detail=f"Failed to switch Azure subscription: {str(e)}")
 
 
+@app.get("/api/azure/auth/status")
+async def get_azure_auth_status():
+    """
+    Checks if the backend container is logged in to Azure CLI via 'az account show'.
+    """
+    import subprocess
+    import shutil
+    az_path = shutil.which("az") or shutil.which("az.cmd")
+    if not az_path:
+        return {
+            "authenticated": False,
+            "installed": False,
+            "message": "Azure CLI ('az') is not installed in backend container."
+        }
+
+    try:
+        res = subprocess.run([az_path, "account", "show", "-o", "json"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=10)
+        if res.returncode == 0 and res.stdout.strip():
+            acc = json.loads(res.stdout)
+            return {
+                "authenticated": True,
+                "installed": True,
+                "user": acc.get("user", {}).get("name", "Authenticated Azure User"),
+                "subscription_name": acc.get("name", ""),
+                "subscription_id": acc.get("id", "")
+            }
+    except Exception as e:
+        logger.warning(f"Azure CLI account show check error: {e}")
+
+    return {
+        "authenticated": False,
+        "installed": True,
+        "message": "Azure CLI is not authenticated. Please run 'az login'."
+    }
+
+
+@app.post("/api/azure/auth/login")
+async def trigger_azure_device_login():
+    """
+    Triggers 'az login --use-device-code' in backend container and returns the authentication device code URL.
+    """
+    import subprocess
+    import shutil
+    az_path = shutil.which("az") or shutil.which("az.cmd")
+    if not az_path:
+        raise HTTPException(status_code=503, detail="Azure CLI ('az') is not installed in system PATH.")
+
+    try:
+        proc = subprocess.Popen(
+            [az_path, "login", "--use-device-code"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True
+        )
+        output_lines = []
+        for _ in range(25):
+            line = proc.stdout.readline()
+            if not line:
+                break
+            output_lines.append(line)
+            if "microsoft.com/devicelogin" in line or "enter the code" in line.lower():
+                break
+
+        full_output = "".join(output_lines)
+        return {
+            "status": "success",
+            "message": "Azure CLI login process initiated.",
+            "output": full_output
+        }
+    except Exception as e:
+        logger.error(f"Error initiating Azure CLI login: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Azure CLI login error: {str(e)}")
+
+
+

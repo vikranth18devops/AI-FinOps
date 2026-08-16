@@ -112,9 +112,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           )}
 
-          {/* User Profile & Logout */}
+          {/* User Profile, Azure CLI Status & Logout */}
           {user && (
             <div className="flex items-center space-x-3 shrink-0">
+              <AzureAuthBadge />
+
               <div className="hidden lg:flex items-center space-x-2 text-xs font-mono bg-slate-900/80 border border-indigo-500/30 px-3.5 py-1.5 rounded-xl text-slate-300 glow-indigo">
                 <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 <UserIcon className="h-3.5 w-3.5 text-indigo-400" />
@@ -135,5 +137,121 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
     </nav>
+  );
+};
+
+// Azure Auth Badge Component with Device Login Modal
+const AzureAuthBadge: React.FC = () => {
+  const [azureAuth, setAzureAuth] = React.useState<{ authenticated: boolean; user?: string; message?: string }>({ authenticated: false });
+  const [showModal, setShowModal] = React.useState<boolean>(false);
+  const [loggingIn, setLoggingIn] = React.useState<boolean>(false);
+  const [loginOutput, setLoginOutput] = React.useState<string | null>(null);
+
+  const checkAuthStatus = async () => {
+    try {
+      const res = await fetch('/api/azure/auth/status');
+      const data = await res.json();
+      setAzureAuth(data);
+      if (data.authenticated) {
+        setShowModal(false);
+      }
+    } catch (e) {
+      console.warn('Azure auth status check error:', e);
+    }
+  };
+
+  React.useEffect(() => {
+    checkAuthStatus();
+    const timer = setInterval(checkAuthStatus, 4000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const triggerDeviceLogin = async () => {
+    setLoggingIn(true);
+    setLoginOutput('Initiating az login --use-device-code...');
+    try {
+      const res = await fetch('/api/azure/auth/login', { method: 'POST' });
+      const data = await res.json();
+      setLoginOutput(data.output || 'Device code generated. Open microsoft.com/devicelogin');
+    } catch (err: any) {
+      setLoginOutput(`Login error: ${err.message}`);
+    } finally {
+      setLoggingIn(false);
+    }
+  };
+
+  return (
+    <>
+      {azureAuth.authenticated ? (
+        <div className="flex items-center space-x-1.5 bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 px-3 py-1.5 rounded-xl text-xs font-mono glow-emerald">
+          <Zap className="h-3.5 w-3.5 text-emerald-400 animate-pulse" />
+          <span className="hidden sm:inline font-bold">AZURE Active:</span>
+          <span className="truncate max-w-[120px]" title={azureAuth.user}>{azureAuth.user}</span>
+        </div>
+      ) : (
+        <button
+          onClick={() => { setShowModal(true); triggerDeviceLogin(); }}
+          className="flex items-center space-x-1.5 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/50 text-amber-300 hover:text-amber-200 px-3 py-1.5 rounded-xl text-xs font-mono font-bold transition-all shadow-lg hover:shadow-amber-500/20 cursor-pointer animate-pulse"
+        >
+          <Cpu className="h-3.5 w-3.5 text-amber-400" />
+          <span>Azure Auth (az login)</span>
+        </button>
+      )}
+
+      {/* Azure CLI Device Login Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-indigo-500/50 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-6 glow-indigo relative overflow-hidden">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
+                  <Zap className="h-5 w-5 animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white tracking-tight">Azure Portal CLI Login</h3>
+                  <p className="text-xs text-slate-400 font-mono">Authenticate backend to your Azure Portal</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-slate-400 hover:text-white font-mono text-sm px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4 font-mono text-xs">
+              <p className="text-slate-300 leading-relaxed">
+                Open <a href="https://microsoft.com/devicelogin" target="_blank" rel="noreferrer" className="text-cyan-400 underline font-bold animate-pulse">https://microsoft.com/devicelogin</a> in your browser and enter the code below to complete Azure Portal authentication:
+              </p>
+
+              <div className="bg-slate-950 p-4 rounded-2xl border border-indigo-500/30 text-emerald-300 max-h-48 overflow-y-auto whitespace-pre-wrap leading-relaxed shadow-inner">
+                {loginOutput ? (
+                  <span dangerouslySetInnerHTML={{
+                    __html: loginOutput.replace(/(https:\/\/microsoft\.com\/devicelogin)/g, '<a href="$1" target="_blank" class="text-amber-300 underline font-bold animate-pulse">$1</a>')
+                  }} />
+                ) : (
+                  'Generating device code...'
+                )}
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  onClick={triggerDeviceLogin}
+                  disabled={loggingIn}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-indigo-500/30 disabled:opacity-50 text-xs"
+                >
+                  {loggingIn ? 'Generating...' : 'Re-Generate Device Code'}
+                </button>
+                <div className="flex items-center space-x-2 text-slate-400 text-[11px]">
+                  <div className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+                  <span>Auto-polling status...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
