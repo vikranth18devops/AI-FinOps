@@ -1,75 +1,69 @@
-# 09 - Observability & Logging Stack on Azure AKS (Prometheus + Grafana + Loki + Alertmanager)
+# 09 - Observability & Logging Stack on Azure AKS (Prometheus + Grafana + Loki + Tempo + Alertmanager)
 
 <p align="left">
   <img src="https://img.shields.io/badge/Prometheus-Monitoring-E6522C?style=for-the-badge&logo=prometheus&logoColor=white" />
   <img src="https://img.shields.io/badge/Grafana-Dashboards-F46800?style=for-the-badge&logo=grafana&logoColor=white" />
   <img src="https://img.shields.io/badge/Loki-Logging-F46800?style=for-the-badge&logo=grafana&logoColor=white" />
+  <img src="https://img.shields.io/badge/Tempo-Tracing-F46800?style=for-the-badge&logo=grafana&logoColor=white" />
   <img src="https://img.shields.io/badge/Azure_AKS-Observability-0089D6?style=for-the-badge&logo=microsoft-azure&logoColor=white" />
 </p>
 
 ## 📌 Step Overview
-Add a production-grade observability and log aggregation stack to Azure AKS — **Prometheus** (metrics), **Grafana** (dashboards), **Alertmanager** (alerts), **Loki** (log store), and **Promtail** (log shipper).
+Deploy a production-grade observability and log aggregation stack to Azure AKS — **Prometheus** (metrics), **Grafana** (dashboards), **Alertmanager** (alerts), **Loki** (log store), **Tempo** (distributed tracing), and **OpenTelemetry Collector** (OTLP ingestion).
 
 Expose Grafana, Prometheus, and Alertmanager UIs cleanly under sub-paths of your domain **`http://vikranthsunkarpally.in/`**:
 - **Grafana Dashboards**: `http://vikranthsunkarpally.in/grafana/`
 - **Prometheus Metric Explorer**: `http://vikranthsunkarpally.in/prometheus/`
 - **Alertmanager Alerts**: `http://vikranthsunkarpally.in/alertmanager/`
-- **Log Aggregation**: Container logs from all pods streamed to Loki and queryable inside Grafana.
+- **Log & Trace Correlation**: Container logs from all pods streamed to Loki, traces to Tempo, queryable inside Grafana.
 
 ---
 
 ## 🏗️ Architecture & Component Layout
 
 ```text
-                                  [Internet]
-                                      │
-                                      ▼
-                      ┌──────────────────────────────┐
-                      │ Traefik LoadBalancer (AKS)   │
-                      │ vikranthsunkarpally.in       │
-                      └──────────────┬───────────────┘
-                                     │  IngressRoutes (sub-paths)
-        ┌────────────────────────────┼────────────────────────────┐
-        │                            │                            │
-        ▼                            ▼                            ▼
-   /grafana/                    /prometheus/                /alertmanager/
-        │                            │                            │
-        ▼                            ▼                            ▼
-   ┌──────────────────────────────────────────────────────────────────────────┐
-   │ Namespace: observability                                                │
-   │  ┌──────────┐            ┌────────────┐            ┌────────────┐       │
-   │  │ Grafana  │            │ Prometheus │            │Alertmanager│       │
-   │  │          │            │ (10Gi PVC) │            │ (5Gi PVC)  │       │
-   │  └────┬─────┘            └─────▲──────┘            └────────────┘       │
-   │       │                        │ scrape                             │
-   │       │                        │ (ServiceMonitor CRDs)              │
-   │       │                  ┌─────┴─────────────────────────────┐       │
-   │       │                  │ Microservice Pods (/metrics)      │       │
-   │       │                  └───────────────────────────────────┘       │
-   │       │ datasource                                                   │
-   │       ▼                                                              │
-   │  ┌──────────┐                                                        │
-   │  │   Loki   │ ◀── Promtail (DaemonSet) tails container logs           │
-   │  │(10Gi PVC)│     on every AKS node                                  │
-   │  └──────────┘                                                        │
-   │ Namespace: logging                                                   │
-   └──────────────────────────────────────────────────────────────────────────┘
+   finops services (OTLP :4317)           Prometheus scrapes /metrics
+            │                                        ▲
+            ▼                                        │  (ServiceMonitor)
+   ┌──────────────────┐    traces     ┌─────────────┴──────────────┐
+   │  OTel Collector  │ ───────────►  │   observability namespace   │
+   │  (OTLP receiver) │    metrics    │  Prometheus + Alertmanager  │
+   └──────────────────┘ ───────────►  │  Grafana · Loki · Tempo     │
+                                       │  Promtail (DaemonSet)       │
+   pod stdout ──Promtail──► Loki ─────►│                             │
+                                       └─────────────┬──────────────┘
+                                                     ▼
+                                            Grafana dashboards
+                                     (metrics ↔ logs ↔ traces linked)
 ```
+
+| Concern | Tool | Why |
+|---|---|---|
+| **Metrics** | Prometheus + Alertmanager | De-facto standard; Prometheus Operator converts `ServiceMonitor` CRDs into scrape configs. |
+| **Dashboards / Alerts UI** | Grafana | Single pane of glass for metrics, logs, and traces with cross-signal link correlation. |
+| **Logs** | Loki + Promtail | Promtail streams container stdout; Loki indexes by label for fast in-cluster querying. |
+| **Traces** | Tempo | Lightweight trace store queried directly inside Grafana. |
+| **Ingestion** | OTel Collector | Receives OTLP telemetry from microservices and routes metrics/spans to Tempo and Prometheus. |
 
 ---
 
-## ⚡ Step 1: Install Prometheus, Grafana & Alertmanager (`kube-prometheus-stack`)
+## ⚡ Step 1: Add Helm Repositories & Install Stack
 
-Install the `kube-prometheus-stack` chart into the `observability` namespace with sub-path routing enabled for domain `vikranthsunkarpally.in`:
-
+### 1a. Create Namespaces & Add Helm Repos
 ```bash
-# 1. Add Prometheus Helm repository
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts --force-update
-helm repo update
+kubectl create namespace observability --dry-run=client -o yaml | kubectl apply -f -
+kubectl create namespace logging --dry-run=client -o yaml | kubectl apply -f -
 
-# 2. Deploy kube-prometheus-stack
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
+helm repo update
+```
+
+### 1b. Deploy `kube-prometheus-stack` (Metrics + Grafana + Alertmanager)
+```bash
 helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
-  --namespace observability --create-namespace \
+  --namespace observability \
   --set fullnameOverride=kube-prometheus \
   --set grafana.enabled=true \
   --set grafana.ingress.enabled=false \
@@ -84,41 +78,35 @@ helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
   --wait --timeout=5m
 ```
 
-Verify pod health:
+### 1c. Deploy `loki-stack` (Log Aggregation)
 ```bash
-kubectl get pods -n observability
-```
-
----
-
-## ⚡ Step 2: Install Loki & Promtail Log Aggregator (`loki-stack`)
-
-Install Loki and Promtail in the `logging` namespace to collect and index container logs across all AKS worker nodes:
-
-```bash
-# 1. Add Grafana Helm repository
-helm repo add grafana https://grafana.github.io/helm-charts --force-update
-helm repo update
-
-# 2. Deploy loki-stack with Promtail lokiAddress override
+# Release name MUST be "loki" or "loki-stack" so Grafana datasource matches
 helm upgrade --install loki grafana/loki-stack \
-  --namespace logging --create-namespace \
+  --namespace logging \
   --set promtail.enabled=true \
   --set 'promtail.config.lokiAddress=http://logging-loki:3100/loki/api/v1/push' \
   --set grafana.enabled=false \
   --wait
 ```
 
-Verify logging pods:
+### 1d. Deploy Tempo (Tracing)
 ```bash
+helm upgrade --install tempo grafana/tempo \
+  --namespace observability \
+  --wait --timeout=5m
+```
+
+Verify all observability pods:
+```bash
+kubectl get pods -n observability
 kubectl get pods -n logging
 ```
 
 ---
 
-## ⚡ Step 3: Configure Traefik IngressRoutes for Observability UIs
+## ⚡ Step 2: Configure Traefik IngressRoutes for Observability UIs
 
-Apply Traefik Ingress routes to expose `/grafana`, `/prometheus`, and `/alertmanager` under `vikranthsunkarpally.in`:
+Expose Grafana, Prometheus, and Alertmanager under `http://vikranthsunkarpally.in/`:
 
 ```bash
 cat <<EOF | kubectl apply -f -
@@ -159,35 +147,27 @@ spec:
 EOF
 ```
 
-### Access Credentials:
+### 🔑 Access Credentials & Password Management:
 - **Grafana Dashboard**: `http://vikranthsunkarpally.in/grafana/`  
   - **Username**: `admin`  
-  - **Retrieve Password Command**:  
+  - **Retrieve Admin Password Command**:  
     ```bash
     kubectl -n observability get secret prometheus-grafana -o jsonpath="{.data.admin-password}" | base64 -d ; echo
     ```
 - **Prometheus UI**: `http://vikranthsunkarpally.in/prometheus/`
 - **Alertmanager UI**: `http://vikranthsunkarpally.in/alertmanager/`
 
-### 🔑 How to Change / Reset Grafana Admin Password:
-
-**Method 1: Change inside Grafana UI (Browser)**
-1. Log into Grafana at `http://vikranthsunkarpally.in/grafana/`.
-2. Click your **Profile Icon (Avatar)** in the bottom-left corner -> Select **Profile**.
-3. Under **Change password**, enter your **Old password** and **New password**, then click **Change password**.
-
-**Method 2: Reset Password via CLI (`kubectl exec`)**
+#### Reset Grafana Password via CLI:
 ```bash
-# Set new admin password directly via Grafana CLI inside the pod
 GRAFANA_POD=$(kubectl get pod -n observability -l app.kubernetes.io/name=grafana -o jsonpath='{.items[0].metadata.name}')
 kubectl exec -it $GRAFANA_POD -n observability -c grafana -- grafana-cli admin reset-admin-password "YourNewSecretPassword123!"
 ```
 
 ---
 
-## ⚡ Step 4: Configure ServiceMonitor for Application Metrics Scraping
+## ⚡ Step 3: Configure ServiceMonitor for Application Metrics Scraping
 
-Apply a `ServiceMonitor` resource in namespace `finops` so Prometheus automatically scrapes `/metrics` endpoints across backend services:
+Apply a `ServiceMonitor` resource in namespace `finops` so Prometheus automatically scrapes `/metrics` endpoints across microservices:
 
 ```bash
 cat <<EOF | kubectl apply -f -
@@ -220,7 +200,7 @@ curl -s "http://vikranthsunkarpally.in/prometheus/api/v1/query?query=up%7Bnamesp
 
 ---
 
-## ⚡ Step 5: Configure Alerting Rules (`PrometheusRule` CRD)
+## ⚡ Step 4: Configure Alerting Rules (`PrometheusRule` CRD)
 
 Apply alerting rules to monitor high error rates, pod restarts, and database downtime:
 
@@ -276,9 +256,10 @@ Open **`http://vikranthsunkarpally.in/prometheus/`** to run PromQL queries:
 
 | Symptom | Probable Cause | Resolution |
 | :--- | :--- | :--- |
-| Grafana UI asset paths return 404 | Missing `serve_from_sub_path` | Ensure `grafana.ini.server.root_url` is set to `http://vikranthsunkarpally.in/grafana/`. |
+| Grafana UI asset paths return 404 | Service name mismatch in Ingress | Ensure Ingress points to `name: prometheus-grafana` on port 80 and `serve_from_sub_path=true`. |
 | Promtail logs flood with `lookup logging: no such host` | Default Loki service name mismatch | Set `promtail.config.lokiAddress` explicitly to `http://logging-loki:3100/loki/api/v1/push`. |
 | Prometheus shows 0 targets under `finops` | `serviceMonitorSelector` mismatch | Ensure `ServiceMonitor` carries label `release: prometheus` and targets port name `http`. |
+| Loki logs panel empty | Service name release mismatch | Confirm Loki release name is `loki` or `loki-stack` and service matches Grafana datasource URL. |
 
 ---
 
