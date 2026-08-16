@@ -3,6 +3,10 @@ name: GCP GKE CI/CD Enterprise Production Pipeline
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - 'docs/gcp/**'
+      - 'terraform/gcp/**'
+      - '.github/workflows/ci-cd-gcp.yml'
   workflow_dispatch:
 
 permissions:

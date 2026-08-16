@@ -3,6 +3,10 @@ name: AWS EKS CI/CD Enterprise Production Pipeline
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - 'docs/aws/**'
+      - 'terraform/aws/**'
+      - '.github/workflows/ci-cd-aws.yml'
   workflow_dispatch:
 
 permissions:

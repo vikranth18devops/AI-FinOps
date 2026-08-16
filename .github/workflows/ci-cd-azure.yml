@@ -3,6 +3,12 @@ name: Azure AKS CI/CD Enterprise Production Pipeline
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - 'docs/azure/**'
+      - 'terraform/azure/**'
+      - 'chart/**'
+      - 'application/**'
+      - '.github/workflows/ci-cd-azure.yml'
   workflow_dispatch:
 
 permissions:
