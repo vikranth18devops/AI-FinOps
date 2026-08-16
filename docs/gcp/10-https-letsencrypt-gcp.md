@@ -134,7 +134,7 @@ Inspect TLS certificate details:
 ```bash
 kubectl get secret finops-tls -n finops -o jsonpath='{.data.tls\.crt}' | base64 -d | openssl x509 -noout -issuer -dates
 ```
-> Expected Output: `issuer=C=US, O=Let's Encrypt, CN=R10` (or `R11`)
+> Expected Output: `issuer=C=US, O=Let's Encrypt, CN=YE2` (or `R10`, `R11`)
 
 ---
 
