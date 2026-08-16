@@ -67,7 +67,7 @@ export const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigateToSignup
           
           <div className="flex items-center justify-center space-x-1.5 mb-1">
             <h2 className="font-cyber text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-indigo-100 to-cyan-300">
-              AI FinOps Vault
+              AI FinOps Management
             </h2>
             <Sparkles className="h-4 w-4 text-amber-400 animate-pulse" />
           </div>

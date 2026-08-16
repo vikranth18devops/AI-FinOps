@@ -185,7 +185,7 @@ export const Signup: React.FC<SignupProps> = ({ onSignupSuccess, onNavigateToLog
               onClick={onNavigateToLogin}
               className="text-pink-400 hover:text-pink-300 font-semibold underline underline-offset-4 cursor-pointer"
             >
-              Sign into AI FinOps Vault
+              Sign into AI FinOps Management
             </button>
           </p>
         </div>
