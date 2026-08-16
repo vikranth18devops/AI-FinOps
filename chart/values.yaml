@@ -1,11 +1,11 @@
 replicaCount: 1
 
 image:
-  repository: ghcr.io/vikranth18devops
+  repository: finopsacr20261119.azurecr.io
   pullPolicy: IfNotPresent
-  frontendTag: "22a406606d777d62da86241ca6c547db1a775b2f"
-  backendTag: "22a406606d777d62da86241ca6c547db1a775b2f"
-  uiScriptTag: "22a406606d777d62da86241ca6c547db1a775b2f"
+  frontendTag: "8d05d017a98893dcc29bc53b96fb1cab4a6156e0"
+  backendTag: "8d05d017a98893dcc29bc53b96fb1cab4a6156e0"
+  uiScriptTag: "8d05d017a98893dcc29bc53b96fb1cab4a6156e0"
 
 service:
   frontendPort: 80
