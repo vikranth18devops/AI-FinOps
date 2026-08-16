@@ -95,7 +95,7 @@ git pull --rebase origin main
 git push origin main
 ```
 
-To trigger an immediate ArgoCD refresh without waiting for the 3-minute polling cycle:
+To trigger an immediate ArgoCD refresh without waiting for the 1-minute polling cycle:
 ```bash
 kubectl -n argocd annotate app finops-application argocd.argoproj.io/refresh=hard --overwrite
 ```
