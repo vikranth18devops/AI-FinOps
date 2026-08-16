@@ -240,7 +240,25 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
-      - name: GitOps CD Verification (Verify Helm Chart Deployment)
+      - name: GitOps CD Update (Bump Helm Chart Image Tags)
         run: |
-          echo "Verifying Azure GitOps CI/CD pipeline execution complete."
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          if [ -n "${{ secrets.ACR_LOGIN_SERVER }}" ]; then
+            TARGET_REPO="${{ secrets.ACR_LOGIN_SERVER }}"
+          else
+            REPO_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+            TARGET_REPO="ghcr.io/${REPO_OWNER}"
+          fi
+
+          echo "Updating chart/values.yaml repository to: ${TARGET_REPO}"
+          sed -i "s|repository:.*|repository: ${TARGET_REPO}|" chart/values.yaml
+          sed -i "s/backendTag:.*/backendTag: \"${{ github.sha }}\"/" chart/values.yaml
+          sed -i "s/frontendTag:.*/frontendTag: \"${{ github.sha }}\"/" chart/values.yaml
+          sed -i "s/uiScriptTag:.*/uiScriptTag: \"${{ github.sha }}\"/" chart/values.yaml
+
+          git add chart/values.yaml
+          git commit -m "Azure GitOps CD: Bump image tags to ${{ github.sha }} [skip ci]" || true
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main || true
 
