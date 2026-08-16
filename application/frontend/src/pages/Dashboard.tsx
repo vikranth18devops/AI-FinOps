@@ -361,12 +361,25 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
       {/* Error Banner */}
       {error && (
-        <div className="cyber-card bg-rose-500/10 border border-rose-500/40 rounded-2xl p-5 flex items-start space-x-4 glow-rose">
-          <AlertTriangle className="h-6 w-6 text-rose-400 shrink-0 mt-0.5" />
-          <div className="space-y-1 font-mono">
-            <h4 className="text-sm font-bold text-rose-300">Azure Investigation Alert</h4>
-            <p className="text-xs text-rose-200/90">{error}</p>
+        <div className="cyber-card bg-rose-500/10 border border-rose-500/40 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 glow-rose">
+          <div className="flex items-start space-x-4">
+            <AlertTriangle className="h-6 w-6 text-rose-400 shrink-0 mt-0.5" />
+            <div className="space-y-1 font-mono">
+              <h4 className="text-sm font-bold text-rose-300">Azure Investigation Alert</h4>
+              <p className="text-xs text-rose-200/90">{error}</p>
+            </div>
           </div>
+          {(error.toLowerCase().includes('azure cli') || error.toLowerCase().includes('logged in') || error.toLowerCase().includes('auth')) && (
+            <a
+              href="/studio"
+              target="_blank"
+              rel="noreferrer"
+              className="bg-indigo-600 hover:bg-indigo-500 text-white font-mono text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-indigo-500/30 shrink-0 flex items-center space-x-2 border border-indigo-400/40"
+            >
+              <Globe className="h-4 w-4" />
+              <span>Authenticate Azure CLI on Studio (/studio)</span>
+            </a>
+          )}
         </div>
       )}
 
