@@ -160,7 +160,7 @@ EOF
 #### Reset Grafana Password via CLI:
 ```bash
 GRAFANA_POD=$(kubectl get pod -n observability -l app.kubernetes.io/name=grafana -o jsonpath='{.items[0].metadata.name}')
-kubectl exec -it $GRAFANA_POD -n observability -c grafana -- grafana-cli admin reset-admin-password "YourNewSecretPassword123!"
+kubectl exec $GRAFANA_POD -n observability -c grafana -- grafana cli admin reset-admin-password "password123"
 ```
 
 ---
