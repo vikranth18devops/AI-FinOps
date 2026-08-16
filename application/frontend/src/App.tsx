@@ -140,9 +140,11 @@ export function App() {
       {/* Futuristic Cyber Footer */}
       <footer className="border-t border-slate-800/80 bg-slate-950/80 backdrop-blur-xl py-5 text-xs text-slate-400 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center space-x-2 text-slate-400">
-            <ShieldCheck className="h-4 w-4 text-emerald-400" />
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-slate-400">
+            <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0" />
             <span>AI Cloud Cost Detective &copy; 2026. Microservices AI FinOps Intelligence Platform.</span>
+            <span className="text-slate-500 hidden sm:inline">•</span>
+            <span>Implemented by <a href="https://www.linkedin.com/in/vikranth-sunkarpally/" target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:text-sky-300 underline underline-offset-2 transition-colors font-medium">Vikranth Sunkarpally</a></span>
           </div>
 
           <div className="flex items-center space-x-2.5 text-slate-400 font-mono">

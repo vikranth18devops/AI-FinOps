@@ -22,6 +22,13 @@ This directory contains the step-by-step execution guides for provisioning, conf
 
 ---
 
+<p align="center">
+  <b>AI Cloud Cost Detective &copy; 2026. Microservices AI FinOps Intelligence Platform.</b><br/>
+  Implemented by <a href="https://www.linkedin.com/in/vikranth-sunkarpally/" target="_blank"><b>Vikranth Sunkarpally</b></a>
+</p>
+
+---
+
 ## 🏗️ 3-Tier Microservice Stack Overview
 
 1. **React Frontend Dashboard (`application/frontend`)**: Port `5173`

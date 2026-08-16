@@ -100,3 +100,10 @@ Run all 3 microservices locally from workspace root:
 - **In-Cluster PostgreSQL StatefulSet**: Saves $100+/month by eliminating managed database cloud surcharges.
 - **ArgoCD GitOps Sync**: Real-time cluster state reconciliation driven by GitHub pushes.
 - **Full Observability Stack**: Centralized log streaming via Loki & Promtail; metrics scraping via Prometheus ServiceMonitors; Grafana dashboards.
+
+---
+
+<p align="center">
+  <b>AI Cloud Cost Detective &copy; 2026. Microservices AI FinOps Intelligence Platform.</b><br/>
+  Implemented by <a href="https://www.linkedin.com/in/vikranth-sunkarpally/" target="_blank"><b>Vikranth Sunkarpally</b></a>
+</p>

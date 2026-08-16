@@ -54,3 +54,10 @@ To tear down all resources:
 ```bash
 ./script_to_create_Az/create_azure_resources.sh --destroy --envs dev,qa,prd snapthreadz eastus
 ```
+
+---
+
+<p align="center">
+  <b>AI Cloud Cost Detective &copy; 2026. Microservices AI FinOps Intelligence Platform.</b><br/>
+  Implemented by <a href="https://www.linkedin.com/in/vikranth-sunkarpally/" target="_blank"><b>Vikranth Sunkarpally</b></a>
+</p>
