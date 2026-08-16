@@ -327,32 +327,44 @@ async def get_user_analyses(user_id: Optional[int] = None) -> List[Dict[str, Any
 
 async def create_user(email: str, password_hash: str) -> Dict[str, Any]:
     """
-    Creates a new user record in the 'users' table.
+    Creates a new user record in the 'users' table in PostgreSQL or fallback SQLite.
     """
     global _pg_pool, _use_sqlite, _sqlite_db_path, _db_initialized
 
-    if not _db_initialized:
+    if not _db_initialized or (_pg_pool is None and not _use_sqlite):
         await init_db()
 
     email_clean = email.strip().lower()
 
-    if not _use_sqlite and _pg_pool:
-        try:
-            async with _pg_pool.acquire() as conn:
-                row = await conn.fetchrow(
-                    "INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email, created_at",
-                    email_clean, password_hash
-                )
-                return {
-                    "id": row["id"],
-                    "email": row["email"],
-                    "created_at": row["created_at"].isoformat() if row["created_at"] else None
-                }
-        except Exception as e:
-            logger.error(f"PostgreSQL create_user error: {e}")
-            raise e
+    if not _use_sqlite:
+        for attempt in range(1, 3):
+            try:
+                if _pg_pool is None:
+                    await init_db()
+                async with _pg_pool.acquire() as conn:
+                    row = await conn.fetchrow(
+                        "INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email, created_at",
+                        email_clean, password_hash
+                    )
+                    logger.info(f"Successfully created user {email_clean} in PostgreSQL database.")
+                    return {
+                        "id": row["id"],
+                        "email": row["email"],
+                        "created_at": row["created_at"].isoformat() if row["created_at"] else None
+                    }
+            except Exception as e:
+                logger.error(f"PostgreSQL create_user error (attempt {attempt}): {e}")
+                if attempt == 1:
+                    _db_initialized = False
+                    await init_db()
+                else:
+                    raise e
 
     import aiosqlite
+    if not _sqlite_db_path:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        _sqlite_db_path = os.path.join(base_dir, "cost_detective.db")
+
     async with aiosqlite.connect(_sqlite_db_path) as db:
         db.row_factory = aiosqlite.Row
         try:
@@ -362,6 +374,7 @@ async def create_user(email: str, password_hash: str) -> Dict[str, Any]:
             )
             await db.commit()
             user_id = cursor.lastrowid
+            logger.info(f"Successfully created user {email_clean} in SQLite fallback database.")
             return {
                 "id": user_id,
                 "email": email_clean
@@ -373,33 +386,40 @@ async def create_user(email: str, password_hash: str) -> Dict[str, Any]:
 
 async def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
     """
-    Retrieves a user by email address.
+    Retrieves a user by email address from PostgreSQL or fallback SQLite.
     """
     global _pg_pool, _use_sqlite, _sqlite_db_path, _db_initialized
 
-    if not _db_initialized:
+    if not _db_initialized or (_pg_pool is None and not _use_sqlite):
         await init_db()
 
     email_clean = email.strip().lower()
 
-    if not _use_sqlite and _pg_pool:
-        try:
-            async with _pg_pool.acquire() as conn:
-                row = await conn.fetchrow(
-                    "SELECT id, email, password_hash, created_at FROM users WHERE email = $1",
-                    email_clean
-                )
-                if row:
-                    return {
-                        "id": row["id"],
-                        "email": row["email"],
-                        "password_hash": row["password_hash"],
-                        "created_at": row["created_at"].isoformat() if row["created_at"] else None
-                    }
-                return None
-        except Exception as e:
-            logger.error(f"PostgreSQL get_user_by_email error: {e}")
-            raise e
+    if not _use_sqlite:
+        for attempt in range(1, 3):
+            try:
+                if _pg_pool is None:
+                    await init_db()
+                async with _pg_pool.acquire() as conn:
+                    row = await conn.fetchrow(
+                        "SELECT id, email, password_hash, created_at FROM users WHERE email = $1",
+                        email_clean
+                    )
+                    if row:
+                        return {
+                            "id": row["id"],
+                            "email": row["email"],
+                            "password_hash": row["password_hash"],
+                            "created_at": row["created_at"].isoformat() if row["created_at"] else None
+                        }
+                    return None
+            except Exception as e:
+                logger.error(f"PostgreSQL get_user_by_email error (attempt {attempt}): {e}")
+                if attempt == 1:
+                    _db_initialized = False
+                    await init_db()
+                else:
+                    raise e
 
     import aiosqlite
     if not _sqlite_db_path or not os.path.exists(_sqlite_db_path):
