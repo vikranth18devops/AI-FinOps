@@ -3,9 +3,9 @@ replicaCount: 1
 image:
   repository: finopsacr20261119.azurecr.io
   pullPolicy: IfNotPresent
-  frontendTag: "b92f43f57529118c71325f0de905905352b8b949"
-  backendTag: "b92f43f57529118c71325f0de905905352b8b949"
-  uiScriptTag: "b92f43f57529118c71325f0de905905352b8b949"
+  frontendTag: "585e06115bba627b3c2b042754fa50e53dd5cecc"
+  backendTag: "585e06115bba627b3c2b042754fa50e53dd5cecc"
+  uiScriptTag: "585e06115bba627b3c2b042754fa50e53dd5cecc"
 
 service:
   frontendPort: 80
