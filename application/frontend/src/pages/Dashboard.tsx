@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Server, Play, RefreshCw, AlertTriangle, Sparkles, Layers, FileText, ArrowRight, DollarSign, AlertCircle, Cpu, HardDrive, Network, Database, Tag, LayoutList, LayoutGrid, FolderTree, Globe, Lock, ShieldCheck, PieChart, Users, Building2, Search, CheckCircle2, Copy, Check, ChevronDown, Activity, Zap } from 'lucide-react';
+import { Server, Play, RefreshCw, AlertTriangle, Sparkles, Layers, FileText, ArrowRight, DollarSign, AlertCircle, Cpu, HardDrive, Network, Database, Tag, LayoutList, LayoutGrid, FolderTree, Globe, Lock, ShieldCheck, PieChart, Users, Building2, Search, CheckCircle2, Copy, Check, ChevronDown, Activity, Zap, Terminal } from 'lucide-react';
 import { ResourceGroup, ResourceItem } from '../types';
 import { API_BASE_URL } from '../config';
 import { ProgressTracker } from '../components/ProgressTracker';
@@ -43,6 +43,47 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   // Store completed analysis on dashboard
   const [completedReport, setCompletedReport] = useState<any>(null);
+
+  // In-App Terminal Modal State
+  const [showAuthTerminal, setShowAuthTerminal] = useState<boolean>(false);
+  const [authTerminalOutput, setAuthTerminalOutput] = useState<string>('');
+  const [authenticatingInApp, setAuthenticatingInApp] = useState<boolean>(false);
+
+  const triggerInAppAzureAuth = async () => {
+    setShowAuthTerminal(true);
+    setAuthenticatingInApp(true);
+    setAuthTerminalOutput('[$] Initiating Azure CLI Authentication (az login --use-device-code)...\n[$] Contacting Azure OAuth Device Endpoint...');
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/azure/auth/login`, { method: 'POST' });
+      const data = await res.json();
+      const output = data.output || 'To sign in, use a web browser to open the page https://microsoft.com/devicelogin and enter the code to authenticate.';
+      setAuthTerminalOutput(`[$] Azure CLI Device Code Generated Successfully:\n\n${output}\n\n[+] Auto-polling Azure Portal authentication status...`);
+    } catch (err: any) {
+      setAuthTerminalOutput(`[✗] Azure CLI Authentication Error: ${err.message}`);
+    } finally {
+      setAuthenticatingInApp(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!showAuthTerminal) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/azure/auth/status`);
+        const status = await res.json();
+        if (status.authenticated) {
+          setAuthTerminalOutput((prev) => prev + `\n\n[✓] SUCCESS: Azure Portal Authentication Verified for ${status.user}!\n[+] Auto-closing terminal and loading Azure resources...`);
+          setTimeout(() => {
+            setShowAuthTerminal(false);
+            fetchResourceGroups();
+          }, 1500);
+        }
+      } catch (e) {
+        console.warn('Azure status check error:', e);
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [showAuthTerminal]);
 
   const fetchResourceGroups = async () => {
     setLoadingGroups(true);
@@ -370,16 +411,69 @@ export const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
           {(error.toLowerCase().includes('azure cli') || error.toLowerCase().includes('logged in') || error.toLowerCase().includes('auth')) && (
-            <a
-              href="/studio"
-              target="_blank"
-              rel="noreferrer"
-              className="bg-indigo-600 hover:bg-indigo-500 text-white font-mono text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-indigo-500/30 shrink-0 flex items-center space-x-2 border border-indigo-400/40"
+            <button
+              onClick={triggerInAppAzureAuth}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white font-mono text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-indigo-500/30 shrink-0 flex items-center space-x-2 border border-indigo-400/40 cursor-pointer animate-pulse"
             >
-              <Globe className="h-4 w-4" />
-              <span>Authenticate Azure CLI on Studio (/studio)</span>
-            </a>
+              <Terminal className="h-4 w-4 text-cyan-400" />
+              <span>Authenticate Azure CLI (Terminal Console)</span>
+            </button>
           )}
+        </div>
+      )}
+
+      {/* In-App Interactive Azure Terminal Modal */}
+      {showAuthTerminal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-cyan-500/50 rounded-3xl p-6 sm:p-8 max-w-xl w-full shadow-2xl space-y-6 glow-cyan relative overflow-hidden font-mono">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-2xl bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-cyan-400 shrink-0">
+                  <Terminal className="h-5 w-5 animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white tracking-tight">Azure CLI Interactive Console</h3>
+                  <p className="text-xs text-slate-400">Authenticating Azure Portal Session directly in Dashboard</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAuthTerminal(false)}
+                className="text-slate-400 hover:text-white text-sm px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <p className="text-slate-300 leading-relaxed">
+                Open <a href="https://microsoft.com/devicelogin" target="_blank" rel="noreferrer" className="text-cyan-400 underline font-bold animate-pulse">https://microsoft.com/devicelogin</a> in your browser and enter the code below:
+              </p>
+
+              <div className="bg-slate-950 p-4 rounded-2xl border border-cyan-500/30 text-emerald-300 max-h-56 overflow-y-auto whitespace-pre-wrap leading-relaxed shadow-inner">
+                {authTerminalOutput ? (
+                  <span dangerouslySetInnerHTML={{
+                    __html: authTerminalOutput.replace(/(https:\/\/microsoft\.com\/devicelogin)/g, '<a href="$1" target="_blank" class="text-amber-300 underline font-bold animate-pulse">$1</a>')
+                  }} />
+                ) : (
+                  '[$] Initializing terminal process...'
+                )}
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  onClick={triggerInAppAzureAuth}
+                  disabled={authenticatingInApp}
+                  className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-4 py-2 rounded-xl transition-all shadow-lg hover:shadow-cyan-500/30 disabled:opacity-50 text-xs cursor-pointer"
+                >
+                  {authenticatingInApp ? 'Re-Initiating...' : 'Re-Run az login'}
+                </button>
+                <div className="flex items-center space-x-2 text-slate-400 text-[11px]">
+                  <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                  <span>Polling Azure Portal status...</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
