@@ -7,6 +7,10 @@ metadata:
     traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
 spec:
   ingressClassName: traefik
+  tls:
+    - hosts:
+        - vikranthsunkarpally.in
+      secretName: finops-tls
   rules:
     - http:
         paths:
