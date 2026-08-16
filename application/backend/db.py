@@ -442,6 +442,36 @@ async def get_user_by_email(email: str) -> Optional[Dict[str, Any]]:
         return None
 
 
+async def update_user_password(user_id: int, new_password_hash: str) -> bool:
+    """
+    Updates the password_hash for a given user_id in PostgreSQL or SQLite.
+    """
+    global _pg_pool, _sqlite_db_path
+
+    if _pg_pool is not None:
+        try:
+            async with _pg_pool.acquire() as conn:
+                await conn.execute(
+                    "UPDATE users SET password_hash = $1 WHERE id = $2",
+                    new_password_hash, user_id
+                )
+                return True
+        except Exception as e:
+            logger.error(f"PostgreSQL update_user_password failed: {e}")
+
+    if _sqlite_db_path and os.path.exists(_sqlite_db_path):
+        import aiosqlite
+        async with aiosqlite.connect(_sqlite_db_path) as db:
+            await db.execute(
+                "UPDATE users SET password_hash = ? WHERE id = ?",
+                (new_password_hash, user_id)
+            )
+            await db.commit()
+            return True
+
+    return False
+
+
 async def create_schedule(
     schedule_id: str,
     user_id: int,

@@ -169,6 +169,20 @@ EOF
 - **Prometheus UI**: `http://vikranthsunkarpally.in/prometheus/`
 - **Alertmanager UI**: `http://vikranthsunkarpally.in/alertmanager/`
 
+### 🔑 How to Change / Reset Grafana Admin Password:
+
+**Method 1: Change inside Grafana UI (Browser)**
+1. Log into Grafana at `http://vikranthsunkarpally.in/grafana/`.
+2. Click your **Profile Icon (Avatar)** in the bottom-left corner -> Select **Profile**.
+3. Under **Change password**, enter your **Old password** and **New password**, then click **Change password**.
+
+**Method 2: Reset Password via CLI (`kubectl exec`)**
+```bash
+# Set new admin password directly via Grafana CLI inside the pod
+GRAFANA_POD=$(kubectl get pod -n observability -l app.kubernetes.io/name=grafana -o jsonpath='{.items[0].metadata.name}')
+kubectl exec -it $GRAFANA_POD -n observability -c grafana -- grafana-cli admin reset-admin-password "YourNewSecretPassword123!"
+```
+
 ---
 
 ## ⚡ Step 4: Configure ServiceMonitor for Application Metrics Scraping
