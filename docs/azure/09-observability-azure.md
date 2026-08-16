@@ -161,8 +161,11 @@ EOF
 
 ### Access Credentials:
 - **Grafana Dashboard**: `http://vikranthsunkarpally.in/grafana/`  
-  - Username: `admin`  
-  - Password: `prom-operator` (or custom configured)
+  - **Username**: `admin`  
+  - **Retrieve Password Command**:  
+    ```bash
+    kubectl -n observability get secret prometheus-grafana -o jsonpath="{.data.admin-password}" | base64 -d ; echo
+    ```
 - **Prometheus UI**: `http://vikranthsunkarpally.in/prometheus/`
 - **Alertmanager UI**: `http://vikranthsunkarpally.in/alertmanager/`
 
