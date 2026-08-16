@@ -31,7 +31,7 @@ echo "Azure Traefik LoadBalancer IP: ${LB_IP}"
    | :--- | :--- |
    | **Type** | `A` |
    | **Name** | `@` (Root apex domain) |
-   | **Value** | Paste your `$LB_IP` from above (e.g., `20.12.180.45`) |
+   | **Value** | Paste your `$LB_IP` from above (e.g., `48.206.106.130`) |
    | **TTL** | `600` (10 minutes) |
 
 4. Save record changes.
@@ -55,7 +55,7 @@ nslookup vikranthsunkarpally.in 8.8.8.8
 > Expected Output:
 > ```
 > Name:    vikranthsunkarpally.in
-> Address: 20.12.180.45
+> Address: 48.206.106.130
 > ```
 
 ---
@@ -72,7 +72,7 @@ ingress:
   enabled: true
   hosts:
     - vikranthsunkarpally.in
-    - 20.12.180.45
+    - 48.206.106.130
 ```
 
 Generate the lines automatically for your terminal environment:
